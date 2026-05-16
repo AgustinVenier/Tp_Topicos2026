@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "validaciones.h"
+#include "estructuras.h"
 
 int main()
 {
-    printf("Hello world!\n");
+    t_fecha fecha_proceso;
+    ingresarFechaProceso(&fecha_proceso);
+
+
     return 0;
 }
