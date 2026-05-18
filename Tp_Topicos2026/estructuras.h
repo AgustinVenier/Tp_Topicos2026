@@ -2,12 +2,12 @@
 #define ESTRUCTURAS_H_INCLUDED
 
 typedef struct {
-    int a, m, d;
+    int anio, mes, dia;
 }t_fecha;
 
 typedef struct {
     int dni;
-    char cuil[];
+    //char cuil[];
     char ayn[61];
     t_fecha fecha_nac;
     char sexo;
@@ -24,7 +24,7 @@ typedef struct{
     char titulo[61];
     char genero[21];
     int stock;
-}
+}t_titulos;
 
 //preguntar como es la estructura para los miebros
 

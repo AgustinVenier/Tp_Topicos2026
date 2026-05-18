@@ -1,4 +1,8 @@
+#include "estructuras.h"
 #include "validaciones.h"
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
 
 void ingresarFechaProceso(t_fecha *fecha_proceso)
 {
@@ -8,9 +12,9 @@ void ingresarFechaProceso(t_fecha *fecha_proceso)
 
     do
     {
-        scanf("%d/%d/%d", &fecha_proceso->d, &fecha_proceso->m, &fecha_proceso->a);
+        scanf("%d/%d/%d", &fecha_proceso->dia, &fecha_proceso->mes, &fecha_proceso->anio);
 
-        estado = validarFecha(*fecha_proceso);
+        estado = validarFecha(fecha_proceso);
 
         if(estado == ERROR)
         {
@@ -21,7 +25,7 @@ void ingresarFechaProceso(t_fecha *fecha_proceso)
     } while(estado == ERROR);
 }
 
-int validarFecha(t_fecha f){
+int validarFecha(t_fecha *f){
     int diasEnMes;
 
     if (f->anio < 1900)
@@ -57,4 +61,88 @@ int validarFecha(t_fecha f){
 
 
     return OK;
+}
+
+int validarEmail(const char s[]) {
+
+    char *arroba;
+    char *p;
+    int i;
+    int len;
+
+    len = strlen(s);
+
+    // buscamos @
+    arroba = strchr(s, '@');
+
+    // validaciones básicas
+    if (arroba == NULL) {
+        return ERROR;
+    }
+
+    // verificamos que haya un solo @
+    if (strchr(arroba + 1, '@') != NULL) {
+        return ERROR;
+    }
+
+    // no puede empezar ni terminar con @
+    if (s[0] == '@' || s[len - 1] == '@') {
+        return ERROR;
+    }
+
+    // después de @ no puede haber punto
+    if (*(arroba + 1) == '.') {
+        return ERROR;
+    }
+
+     // VALIDAMOS PARTE LOCAL
+
+    for (p = (char *)s; p < arroba; p++) {
+
+        if (!isalnum(*p) && *p != '.') {
+            return ERROR;
+        }
+    }
+
+    // VALIDAMOS DOMINIO
+
+    p = arroba + 1;
+
+    // debe existir al menos un punto en dominio
+    if (strchr(p, '.') == NULL) {
+        return ERROR;
+    }
+
+    while (*p != '\0') {
+
+        if (!isalnum(*p) && *p != '.') {
+            return ERROR;
+        }
+
+        p++;
+    }
+
+    // VALIDAMOS EXTENSIÓN
+
+    // buscamos .com dentro del dominio
+    char *pstr = strstr(arroba + 1, ".com");
+
+    if (pstr == NULL) {
+        return ERROR;
+    }
+
+    // después de ".com"
+    char *despues = pstr + 4;
+
+    // puede terminar ahí
+    if (*despues == '\0') {
+        return OK;
+    }
+
+    // o puede seguir ".ar"
+    if (strcmp(despues, ".ar") == 0) {
+        return OK;
+    }
+
+    return ERROR;
 }
