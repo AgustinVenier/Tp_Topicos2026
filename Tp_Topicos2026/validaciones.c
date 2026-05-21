@@ -75,7 +75,7 @@ int validarEmail(const char s[]) {
     // buscamos @
     arroba = strchr(s, '@');
 
-    // validaciones básicas
+    // validaciones bï¿½sicas
     if (arroba == NULL) {
         return ERROR;
     }
@@ -90,7 +90,7 @@ int validarEmail(const char s[]) {
         return ERROR;
     }
 
-    // después de @ no puede haber punto
+    // despuï¿½s de @ no puede haber punto
     if (*(arroba + 1) == '.') {
         return ERROR;
     }
@@ -122,7 +122,7 @@ int validarEmail(const char s[]) {
         p++;
     }
 
-    // VALIDAMOS EXTENSIÓN
+    // VALIDAMOS EXTENSIï¿½N
 
     // buscamos .com dentro del dominio
     char *pstr = strstr(arroba + 1, ".com");
@@ -131,10 +131,10 @@ int validarEmail(const char s[]) {
         return ERROR;
     }
 
-    // después de ".com"
+    // despuï¿½s de ".com"
     char *despues = pstr + 4;
 
-    // puede terminar ahí
+    // puede terminar ahï¿½
     if (*despues == '\0') {
         return OK;
     }
@@ -145,4 +145,43 @@ int validarEmail(const char s[]) {
     }
 
     return ERROR;
+}
+char * normalizar(char * cad) //Normaliza el nombre segun pide el TP
+{
+    char * lect = cad, * esc = cad;
+    int primer_letra_palabra;
+    int posPal = 0;
+    while(*lect)
+    {
+        //saltear espacios y comas
+        while(*lect && (isspace(*lect) || *lect == ','))
+            lect++;
+        if(*lect)
+        {
+            posPal++;
+            //despuÃ©s de la primera palabra poner ", "
+            if(posPal == 2)
+            {
+                *esc = ',';
+                esc++;
+                *esc = ' ';
+                esc++;
+            }
+            else if(posPal > 2)
+            {
+                *esc = ' ';
+                esc++;
+            }
+            primer_letra_palabra = 1;
+            while(*lect && !isspace(*lect) && *lect != ',')
+            {
+                *esc = primer_letra_palabra ? toupper(*lect) : tolower(*lect);
+                primer_letra_palabra = 0;
+                esc++;
+                lect++;
+            }
+        }
+    }
+    *esc = '\0';
+    return cad;
 }
