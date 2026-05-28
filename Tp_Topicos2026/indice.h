@@ -1,6 +1,31 @@
 #ifndef INDICE_H_INCLUDED
 #define INDICE_H_INCLUDED
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+#define CANT_ELEMENTOS 100
+#define INCREMENTO 1.3
+#define OK 0
+#define ERROR 1
+#define NO_EXISTE -1
+
+typedef struct
+{
+    unsigned nro_reg;
+    long dni;
+} t_reg_indice;
+
+typedef struct
+{
+    void *vindice;
+    unsigned cantidad_elementos_actual;
+    unsigned cantidad_elementos_maxima;
+} t_indice;
+
+
 //TDA Indice
 void indice_crear(t_indice *indice, size_t nmemb, size_t tamanyo);
 
@@ -31,3 +56,4 @@ int busquedaBinaria(const void *vec,const void *buscado, unsigned cantelem, size
 
 
 #endif // INDICE_H_INCLUDED
+

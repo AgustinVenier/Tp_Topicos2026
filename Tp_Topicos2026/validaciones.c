@@ -185,3 +185,67 @@ char * normalizar(char * cad) //Normaliza el nombre segun pide el TP
     *esc = '\0';
     return cad;
 }
+
+int validarFechaNacimiento(const t_fecha* nacimiento,const t_fecha * t_proceso,int cant_anios) // retorna 0 si es mayor a cant_anios, 1 si es menor, segun cuanto paso desde nacimiento hasta proceso
+{
+    // Calcula edad
+    int edad = t_proceso->anio - nacimiento->anio;
+
+    if (t_proceso->mes < nacimiento->mes || (t_proceso->mes == nacimiento->mes && t_proceso->dia < nacimiento->dia))
+        edad--;
+
+    return (edad < cant_anios);
+}
+
+int validarFechaCategoria(char * categ,const t_fecha* fechaNac,const t_fecha * f_proceso)
+{
+    if(validarFechaNacimiento(fechaNac,f_proceso,18))
+    {
+        if(strcmpi(categ, "MENOR") == 0)
+            return OK;
+        else
+            return ERROR;
+    }
+    if(strcmpi(categ, "ADULTO") == 0)
+        return OK;
+    return ERROR;
+}
+
+int fNacValido(const t_fecha* fechaNac,const t_fecha * f_proceso)
+{
+    if (validarFecha(fechaNac) == ERROR)
+        return ERROR;
+
+    if (validarFechaNacimiento(fechaNac,f_proceso,ANIOS_DESDE_NACIMIENTO) == ERROR)
+        return ERROR;
+
+    return OK;
+}
+
+int fAfiliacionValido(const t_fecha* fechaAfi, const t_fecha* fechaProc, const t_fecha* fechaNac)
+{
+    if (validarFecha(fechaAfi) == ERROR)
+        return ERROR;
+
+    if (compararFecha(fechaAfi, fechaProc) > 0) // Afiliación no puede ser antes del nacimiento
+        return ERROR;
+
+    if (compararFecha(fechaAfi, fechaNac) < 0) // No puede afiliarse antes de nacer
+        return ERROR;
+
+    return OK;
+}
+
+int fUltCoutaValido(const t_fecha* fechaCuota, const t_fecha* fechaAfi, const t_fecha* fechaProc)
+{
+    if (validarFecha(fechaCuota) == ERROR)
+        return ERROR;
+    // No puede ser antes de la afiliación
+    if (compararFecha(fechaCuota, fechaAfi) < 0)    // No puede ser antes de la afiliación
+        return ERROR;
+    // No puede ser después del proceso
+    if (compararFecha(fechaCuota, fechaProc) > 0)   // No puede ser después del proceso
+        return ERROR;
+
+    return OK;
+}
