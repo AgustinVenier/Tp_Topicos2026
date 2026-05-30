@@ -7,7 +7,7 @@ typedef struct {
 
 typedef struct {
     int dni;
-    //char cuil[];
+    char cuil[12];
     char ayn[61];
     t_fecha fecha_nac;
     char sexo;
@@ -24,6 +24,7 @@ typedef struct{
     char titulo[61];
     char genero[21];
     int stock;
+    char estado;
 }t_titulos;
 
 //preguntar como es la estructura para los miebros

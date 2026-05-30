@@ -5,7 +5,6 @@
 #include "estructuras.h"
 #include "indice.h"
 
-
 #define subcarpeta_binario "ArchivoBinario"
 #define nombreArchivoTexto "miembros-VC.txt"
 
