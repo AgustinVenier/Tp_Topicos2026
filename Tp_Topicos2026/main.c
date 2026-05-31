@@ -6,7 +6,9 @@
 #include "indice.h"
 
 #define subcarpeta_binario "ArchivoBinario"
+#define SUBCARPETA_ERROR "ArchivoTextoError"
 #define nombreArchivoTexto "miembros-VC.txt"
+#define ARCHIVO_TITULOS_CSV "titulos.csv"
 
 int main()
 {
