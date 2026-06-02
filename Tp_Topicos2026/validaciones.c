@@ -1,6 +1,69 @@
 #include "validaciones.h"
 #include <stdio.h>
 
+void obtenerCuil(const char *dni, char sexo, char *cuil)
+{
+    int i;
+    int count = 0;
+    int resto;
+    int digito;
+
+    char *ptr1;
+    char *ptr2;
+    char *ptr3;
+
+    if (sexo == 'M') {
+        strcpy(cuil, "20");
+    }
+    else if (sexo == 'F') {
+        strcpy(cuil, "27");
+    }
+    else {
+        strcpy(cuil, "30");
+    }
+
+    strcat(cuil, dni);
+
+    ptr1 = cuil;
+    ptr2 = cuil + 6;
+    ptr3 = cuil + 8;
+
+    for (i = 0; i < 4; i++) {
+        count += (*(ptr1 + i) - '0') * (*(ptr2 - i) - '0');
+    }
+
+    for (i = 0; i < 6; i++) {
+        count += (*(ptr1 + 4 + i) - '0') * (*(ptr3 - i) - '0');
+    }
+
+    resto = count % 11;
+
+    if (resto == 0) {
+        digito = 0;
+    }
+    else if (resto == 1) {
+        if (sexo == 'M') {
+            cuil[0] = '2';
+            cuil[1] = '3';
+            digito = 9;
+        }
+        else if (sexo == 'F') {
+            cuil[0] = '2';
+            cuil[1] = '3';
+            digito = 4;
+        }
+        else {
+            digito = 11 - resto;
+        }
+    }
+    else {
+        digito = 11 - resto;
+    }
+
+    cuil[10] = digito + '0';
+    cuil[11] = '\0';
+}
+
 void ingresarFechaProceso(t_fecha *fecha_proceso)
 {
     int estado;

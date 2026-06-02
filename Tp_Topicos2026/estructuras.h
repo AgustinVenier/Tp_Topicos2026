@@ -25,8 +25,7 @@ typedef struct {
     char titulo[61];
     char genero[21];
     int stock;
-    char estado;
-} t_titulo;
+}t_titulos;
 
 typedef t_titulo t_titulos;
 
