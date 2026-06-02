@@ -12,11 +12,10 @@ int miembros_guardar_en_binario(const char *nombre_binario,
 int miembros_construir_indice(const t_miembro *vec, size_t cantidad, t_indice *indice);
 
 int titulos_cargar_desde_texto(const char *nombre_texto,
-							   t_titulo **vec, size_t *cantidad, size_t *capacidad);
+					   t_titulos **vec, size_t *cantidad, size_t *capacidad);
 int titulos_cargar_desde_binario(const char *nombre_binario,
-								 t_titulo **vec, size_t *cantidad, size_t *capacidad);
+					 t_titulos **vec, size_t *cantidad, size_t *capacidad);
 int titulos_guardar_en_binario(const char *nombre_binario,
-							   const t_titulo *vec, size_t cantidad);
-int titulos_construir_indice(const t_titulo *vec, size_t cantidad, t_indice *indice);
-
+					   const t_titulos *vec, size_t cantidad);
+int titulos_construir_indice(const t_titulos *vec, size_t cantidad, t_indice *indice);
 #endif // ARCHIVOS_H_INCLUDED

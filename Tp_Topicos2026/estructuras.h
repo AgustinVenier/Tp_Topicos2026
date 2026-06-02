@@ -16,6 +16,7 @@ typedef struct {
     char estado;
     char plan[11];
     char email[31];
+    char cuil[12];
 } t_miembro;
 
 typedef t_miembro t_miembros;
@@ -25,8 +26,14 @@ typedef struct {
     char titulo[61];
     char genero[21];
     int stock;
+    char estado;
 }t_titulos;
 
-typedef t_titulo t_titulos;
+typedef struct {
+    long dni;
+    int id_titulo;
+    int cantidad_alquileres;
+    char estado;
+} t_alquiler;
 
 #endif // ESTRUCTURAS_H_INCLUDED

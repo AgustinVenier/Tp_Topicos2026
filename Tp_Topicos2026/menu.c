@@ -35,9 +35,31 @@ static int asegurar_capacidad_registros(t_miembro **vec, size_t *capacidad, size
     return OK;
 }
 
+static int asegurar_capacidad_titulos(t_titulos **vec, size_t *capacidad, size_t necesaria)
+{
+    size_t nueva_capacidad;
+    t_titulos *aux;
+
+    if (necesaria <= *capacidad)
+        return OK;
+
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_titulos));
+    if (!aux)
+        return ERROR;
+
+    *vec = aux;
+    *capacidad = nueva_capacidad;
+    return OK;
+}
+
 static void imprimir_miembro(const t_miembro *m)
 {
     printf("DNI: %ld\n", m->dni);
+    printf("CUIL: %s\n", m->cuil);
     printf("Nombre y Apellido: %s\n", m->nya);
     printf("Fecha de Nacimiento: %02d/%02d/%04d\n", m->fecha_nac.dia, m->fecha_nac.mes, m->fecha_nac.anio);
     printf("Sexo: %c\n", m->sexo);
@@ -49,7 +71,10 @@ static void imprimir_miembro(const t_miembro *m)
     printf("Email: %s\n", m->email);
 }
 
-void menu(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *ind, const t_fecha *fecha)
+void menu(t_miembro **vec_miembros, size_t *cantidad_miembros, size_t *capacidad_miembros, t_indice *ind_miembros,
+          t_titulos **vec_titulos, size_t *cantidad_titulos, size_t *capacidad_titulos, t_indice *ind_titulos,
+          t_alquiler **vec_alquileres, size_t *cantidad_alquileres, size_t *capacidad_alquileres,
+          const t_fecha *fecha)
 {
     char op;
     int resultado;
@@ -75,43 +100,66 @@ void menu(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *ind, c
         switch(op)
         {
         case 'a':
-            resultado = AltaMiembro(vec, cantidad, capacidad, ind, fecha);
+            resultado = AltaMiembro(vec_miembros, cantidad_miembros, capacidad_miembros, ind_miembros, fecha);
             printf(resultado == ERROR ? "\nError al dar de alta el miembro.\n" : "\nAlta realizada con exito.\n");
             break;
 
         case 'b':
-        case 'd':
-        case 'f':
-        case 'h':
-            printf("\nOpcion no implementada en esta entrega.\n");
+            resultado = AltaTitulo(vec_titulos, cantidad_titulos, capacidad_titulos, ind_titulos);
+            printf(resultado == ERROR ? "\nError al dar de alta el titulo.\n" : "\nAlta realizada con exito.\n");
             break;
 
         case 'c':
-            resultado = BajaMiembro(*vec, ind);
+            resultado = BajaMiembro(*vec_miembros, ind_miembros);
             printf(resultado == ERROR ? "\nError al dar la baja del miembro.\n" : "\nBaja realizada con exito.\n");
             break;
 
+        case 'd':
+            resultado = BajaTitulo(*vec_titulos, ind_titulos);
+            printf(resultado == ERROR ? "\nError al dar la baja del titulo.\n" : "\nBaja realizada con exito.\n");
+            break;
+
         case 'e':
-            resultado = ModificacionMiembro(*vec, ind, fecha);
+            resultado = ModificacionMiembro(*vec_miembros, ind_miembros, fecha);
             printf(resultado == ERROR ? "\nError al modificar el miembro.\n" : "\nModificacion realizada con exito.\n");
             break;
 
+        case 'f':
+            resultado = ModificacionTitulo(*vec_titulos, ind_titulos);
+            printf(resultado == ERROR ? "\nError al modificar el titulo.\n" : "\nModificacion realizada con exito.\n");
+            break;
+
         case 'g':
-            resultado = MostrarInfoMiembro(*vec, ind);
+            resultado = MostrarInfoMiembro(*vec_miembros, ind_miembros);
             printf(resultado == ERROR ? "\nError al mostrar\n" : "\nRealizada con exito.\n");
             system("pause");
             break;
 
+        case 'h':
+            resultado = AlquilerTitulo(*vec_miembros, ind_miembros, *vec_titulos, ind_titulos,
+                                      vec_alquileres, cantidad_alquileres, capacidad_alquileres);
+            printf(resultado == ERROR ? "\nError al realizar el alquiler.\n" : "");
+            system("pause");
+            break;
+
         case 'i':
-            resultado = ListadoXDNI(*vec, ind);
+            resultado = ListadoXDNI(*vec_miembros, ind_miembros);
             printf(resultado == ERROR ? "\nError al listar\n" : "\nRealizada con exito.\n");
             system("pause");
             break;
 
         case 'j':
-            resultado = ListadoXPlan(*vec, ind);
+            resultado = ListadoXPlan(*vec_miembros, ind_miembros);
             printf(resultado == ERROR ? "\nError al Listar\n" : "\nRealizada con exito.\n");
             system("pause");
+            break;
+
+        case 'k':
+            printf("Saliendo...\n");
+            break;
+
+        default:
+            printf("Opcion invalida\n");
             break;
         }
     }
@@ -204,6 +252,12 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
             printf("Ingreso Incorrecto.\n");
     }
     while (validar == ERROR);
+
+    {
+        char dni_str[20];
+        snprintf(dni_str, sizeof(dni_str), "%ld", m.dni);
+        obtenerCuil(dni_str, m.sexo, m.cuil);
+    }
 
     do
     {
@@ -508,6 +562,349 @@ int ListadoXPlan(t_miembro *vec, t_indice *ind)
             }
         }
     }
+
+    return OK;
+}
+
+static void imprimir_titulo(const t_titulos *t)
+{
+    printf("ID: %d\n", t->id);
+    printf("Titulo: %s\n", t->titulo);
+    printf("Genero: %s\n", t->genero);
+    printf("Stock: %d\n", t->stock);
+    printf("Estado: %c\n", t->estado);
+}
+
+int AltaTitulo(t_titulos **vec, size_t *cantidad, size_t *capacidad, t_indice *ind)
+{
+    t_titulos t;
+    t_reg_indice_titulo reg;
+    int validar;
+    int max_id = 0;
+    unsigned i;
+
+    memset(&t, 0, sizeof(t));
+
+    if (ind->cantidad_elementos_actual > 0)
+    {
+        for (i = 0; i < *cantidad; i++)
+        {
+            if ((*vec)[i].id > max_id)
+                max_id = (*vec)[i].id;
+        }
+    }
+
+    t.id = max_id + 1;
+
+    printf("Ingrese Titulo: ");
+    if (!fgets(t.titulo, sizeof(t.titulo), stdin))
+        return ERROR;
+    eliminarFinDeLinea(t.titulo);
+
+    if (strlen(t.titulo) == 0)
+        return ERROR;
+
+    do
+    {
+        printf("Ingrese genero (ACCION/DRAMA/COMEDIA/TERROR): ");
+        if (!fgets(t.genero, sizeof(t.genero), stdin))
+            return ERROR;
+        eliminarFinDeLinea(t.genero);
+        normalizarGenero(t.genero);
+        validar = generoValido(t.genero) ? OK : ERROR;
+        if (validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
+    }
+    while (validar == ERROR);
+
+    do
+    {
+        printf("Ingrese stock (>=0): ");
+        if (scanf("%d", &t.stock) != 1)
+            return ERROR;
+        limpiarBuffer();
+        validar = stockValido(t.stock) ? OK : ERROR;
+        if (validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
+    }
+    while (validar == ERROR);
+
+    t.estado = 'A';
+
+    if (asegurar_capacidad_titulos(vec, capacidad, *cantidad + 1) == ERROR)
+        return ERROR;
+
+    reg.id = t.id;
+    reg.nro_reg = (unsigned)(*cantidad);
+    if (indice_insertar(ind, &reg, sizeof(t_reg_indice_titulo), cmp_por_id) == ERROR)
+        return ERROR;
+
+    (*vec)[*cantidad] = t;
+    (*cantidad)++;
+    return OK;
+}
+
+int BajaTitulo(t_titulos *vec, t_indice *ind)
+{
+    int id;
+    t_reg_indice_titulo clave;
+    int pos;
+
+    printf("ID de titulo a dar de baja: ");
+    if (scanf("%d", &id) != 1)
+        return ERROR;
+    limpiarBuffer();
+
+    clave.id = id;
+    pos = indice_buscar(ind, &clave, ind->cantidad_elementos_actual, sizeof(t_reg_indice_titulo), cmp_por_id);
+    if (pos == NO_EXISTE)
+        return ERROR;
+
+    vec[((t_reg_indice_titulo *)ind->vindice)[pos].nro_reg].estado = 'B';
+    return indice_eliminar(ind, &clave, sizeof(t_reg_indice_titulo), cmp_por_id);
+}
+
+int ModificacionTitulo(t_titulos *vec, t_indice *ind)
+{
+    int id;
+    t_reg_indice_titulo clave;
+    int pos;
+    char aux;
+    t_titulos *t;
+    int validar;
+
+    printf("\n=== MODIFICACION DE TITULO ===\n");
+    printf("Ingrese ID a modificar: ");
+    if (scanf("%d", &id) != 1)
+        return ERROR;
+    limpiarBuffer();
+
+    clave.id = id;
+    pos = indice_buscar(ind, &clave, ind->cantidad_elementos_actual, sizeof(t_reg_indice_titulo), cmp_por_id);
+    if (pos == NO_EXISTE)
+        return ERROR;
+
+    t = &vec[((t_reg_indice_titulo *)ind->vindice)[pos].nro_reg];
+    printf("Modificando: %s\n", t->titulo);
+
+    preguntarCambio("titulo", &aux);
+    if (toupper((unsigned char)aux) == 'S')
+    {
+        if (!fgets(t->titulo, sizeof(t->titulo), stdin))
+            return ERROR;
+        eliminarFinDeLinea(t->titulo);
+    }
+
+    preguntarCambio("genero", &aux);
+    if (toupper((unsigned char)aux) == 'S')
+    {
+        do
+        {
+            printf("Ingrese genero (ACCION/DRAMA/COMEDIA/TERROR): ");
+            if (!fgets(t->genero, sizeof(t->genero), stdin))
+                return ERROR;
+            eliminarFinDeLinea(t->genero);
+            normalizarGenero(t->genero);
+            validar = generoValido(t->genero) ? OK : ERROR;
+            if (validar == ERROR)
+                printf("Ingreso Incorrecto.\n");
+        }
+        while (validar == ERROR);
+    }
+
+    preguntarCambio("stock", &aux);
+    if (toupper((unsigned char)aux) == 'S')
+    {
+        do
+        {
+            printf("Ingrese stock (>=0): ");
+            if (scanf("%d", &t->stock) != 1)
+                return ERROR;
+            limpiarBuffer();
+            validar = stockValido(t->stock) ? OK : ERROR;
+            if (validar == ERROR)
+                printf("Ingreso Incorrecto.\n");
+        }
+        while (validar == ERROR);
+    }
+
+    return OK;
+}
+
+int MostrarInfoTitulo(t_titulos *vec, t_indice *ind)
+{
+    int id;
+    t_reg_indice_titulo clave;
+    int pos;
+
+    printf("\n============= INFORMACION DE TITULO =============\n");
+    printf("Ingrese ID a visualizar: ");
+    if (scanf("%d", &id) != 1)
+        return ERROR;
+    limpiarBuffer();
+
+    clave.id = id;
+    pos = indice_buscar(ind, &clave, ind->cantidad_elementos_actual, sizeof(t_reg_indice_titulo), cmp_por_id);
+    if (pos == NO_EXISTE)
+        return ERROR;
+
+    imprimir_titulo(&vec[((t_reg_indice_titulo *)ind->vindice)[pos].nro_reg]);
+    return OK;
+}
+
+static int asegurar_capacidad_alquileres(t_alquiler **vec, size_t *capacidad, size_t necesaria)
+{
+    size_t nueva_capacidad;
+    t_alquiler *aux;
+
+    if (necesaria <= *capacidad)
+        return OK;
+
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_alquiler));
+    if (!aux)
+        return ERROR;
+
+    *vec = aux;
+    *capacidad = nueva_capacidad;
+    return OK;
+}
+
+static int contar_alquileres_activos(const t_alquiler *vec_alquileres, size_t cantidad, long dni)
+{
+    size_t i;
+    int contador = 0;
+
+    for (i = 0; i < cantidad; i++)
+    {
+        if (vec_alquileres[i].dni == dni && vec_alquileres[i].estado == 'A')
+            contador++;
+    }
+
+    return contador;
+}
+
+static int buscar_alquiler(const t_alquiler *vec_alquileres, size_t cantidad, long dni, int id_titulo)
+{
+    size_t i;
+
+    for (i = 0; i < cantidad; i++)
+    {
+        if (vec_alquileres[i].dni == dni && vec_alquileres[i].id_titulo == id_titulo)
+            return (int)i;
+    }
+
+    return NO_EXISTE;
+}
+
+int AlquilerTitulo(t_miembro *vec_miembros, t_indice *ind_miembros,
+                   t_titulos *vec_titulos, t_indice *ind_titulos,
+                   t_alquiler **vec_alquileres, size_t *cantidad_alquileres, size_t *capacidad_alquileres)
+{
+    long dni;
+    int id_titulo;
+    t_reg_indice clave_miembro;
+    t_reg_indice_titulo clave_titulo;
+    int pos_miembro, pos_titulo;
+    int pos_alquiler;
+    t_miembro *miembro;
+    t_titulos *titulo;
+    int alquileres_activos;
+
+    printf("\n============= ALQUILER DE TITULO =============\n");
+
+    printf("Ingrese DNI del miembro: ");
+    if (scanf("%ld", &dni) != 1)
+    {
+        limpiarBuffer();
+        return ERROR;
+    }
+    limpiarBuffer();
+
+    clave_miembro.dni = dni;
+    pos_miembro = indice_buscar(ind_miembros, &clave_miembro, ind_miembros->cantidad_elementos_actual,
+                                sizeof(t_reg_indice), cmp_por_dni);
+    if (pos_miembro == NO_EXISTE)
+    {
+        printf("Error: Miembro no encontrado.\n");
+        return ERROR;
+    }
+
+    miembro = &vec_miembros[((t_reg_indice *)ind_miembros->vindice)[pos_miembro].nro_reg];
+
+    if (toupper((unsigned char)miembro->estado) != 'A')
+    {
+        printf("Error: Miembro no activo.\n");
+        return ERROR;
+    }
+
+    printf("Ingrese ID del titulo: ");
+    if (scanf("%d", &id_titulo) != 1)
+    {
+        limpiarBuffer();
+        return ERROR;
+    }
+    limpiarBuffer();
+
+    clave_titulo.id = id_titulo;
+    pos_titulo = indice_buscar(ind_titulos, &clave_titulo, ind_titulos->cantidad_elementos_actual,
+                               sizeof(t_reg_indice_titulo), cmp_por_id);
+    if (pos_titulo == NO_EXISTE)
+    {
+        printf("Error: Titulo no encontrado.\n");
+        return ERROR;
+    }
+
+    titulo = &vec_titulos[((t_reg_indice_titulo *)ind_titulos->vindice)[pos_titulo].nro_reg];
+
+    if (toupper((unsigned char)titulo->estado) != 'A')
+    {
+        printf("Error: Titulo no disponible.\n");
+        return ERROR;
+    }
+
+    if (titulo->stock <= 0)
+    {
+        printf("Error: No hay stock disponible.\n");
+        return ERROR;
+    }
+
+    alquileres_activos = contar_alquileres_activos(*vec_alquileres, *cantidad_alquileres, dni);
+
+    if (strcmpi(miembro->plan, "BASIC") == 0 && alquileres_activos >= 2)
+    {
+        printf("Error: Miembros BASIC no pueden alquilar mas de 2 peliculas simultaneamente.\n");
+        return ERROR;
+    }
+
+    pos_alquiler = buscar_alquiler(*vec_alquileres, *cantidad_alquileres, dni, id_titulo);
+
+    if (pos_alquiler != NO_EXISTE)
+    {
+        (*vec_alquileres)[pos_alquiler].cantidad_alquileres++;
+        (*vec_alquileres)[pos_alquiler].estado = 'A';
+    }
+    else
+    {
+        if (asegurar_capacidad_alquileres(vec_alquileres, capacidad_alquileres, *cantidad_alquileres + 1) == ERROR)
+            return ERROR;
+
+        (*vec_alquileres)[*cantidad_alquileres].dni = dni;
+        (*vec_alquileres)[*cantidad_alquileres].id_titulo = id_titulo;
+        (*vec_alquileres)[*cantidad_alquileres].cantidad_alquileres = 1;
+        (*vec_alquileres)[*cantidad_alquileres].estado = 'A';
+        (*cantidad_alquileres)++;
+    }
+
+    titulo->stock--;
+
+    printf("\nAlquiler realizado exitosamente.\n");
+    printf("Miembro: %s\n", miembro->nya);
+    printf("Titulo: %s\n", titulo->titulo);
+    printf("Stock restante: %d\n", titulo->stock);
 
     return OK;
 }

@@ -272,3 +272,32 @@ int fUltCoutaValido(const t_fecha* fechaCuota, const t_fecha* fechaAfi, const t_
 
     return OK;
 }
+
+char * normalizarGenero(char * cad)
+{
+    char * p = cad;
+    int primer_letra = 1;
+
+    while(*p)
+    {
+        if(isspace((unsigned char)*p))
+        {
+            primer_letra = 1;
+            p++;
+        }
+        else
+        {
+            if(primer_letra)
+            {
+                *p = toupper((unsigned char)*p);
+                primer_letra = 0;
+            }
+            else
+            {
+                *p = tolower((unsigned char)*p);
+            }
+            p++;
+        }
+    }
+    return cad;
+}

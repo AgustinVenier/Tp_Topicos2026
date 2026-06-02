@@ -6,10 +6,12 @@
 	"validaciones.h"
 	"estructuras.h"
 
-1779120523 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\validaciones.h
+1780434714 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\validaciones.h
 	"estructuras.h"
+	<ctype.h>
+	<string.h>
 
-1779120652 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\estructuras.h
+1780435253 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\estructuras.h
 
 1779127836 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\validaciones.c
 	"estructuras.h"
@@ -71,4 +73,14 @@
 1780411419 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\validaciones.c
 	"validaciones.h"
 	<stdio.h>
+
+1780430461 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\indice.c
+	"indice.h"
+	"validaciones.h"
+
+1780430461 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\indice.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"estructuras.h"
 

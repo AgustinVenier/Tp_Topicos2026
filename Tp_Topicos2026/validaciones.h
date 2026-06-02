@@ -18,12 +18,16 @@
 #define sexValido(a) (toupper(a)=='F'||toupper(a)=='M')
 #define estadoValido(a) (toupper(a)=='A'||toupper(a)=='B')
 #define planValido(a) ((strcmpi((a),"BASIC")==0)||(strcmpi((a),"PREMIUM")==0)||(strcmpi((a),"VIP")==0)||(strcmpi((a),"FAMILY")==0))
+#define generoValido(a) ((strcmpi((a),"ACCION")==0)||(strcmpi((a),"DRAMA")==0)||(strcmpi((a),"COMEDIA")==0)||(strcmpi((a),"TERROR")==0))
+#define stockValido(a) ((a)>=0)
 
+void obtenerCuil(const char *dni, char sexo, char *cuil);
 void ingresarFechaProceso(t_fecha *fecha_proceso);
 int validarFecha(t_fecha *f);
 int compararFecha(const t_fecha *a, const t_fecha *b);
 int validarEmail(const char s[]);
 char * normalizar(char * cad);
+char * normalizarGenero(char * cad);
 int validarFechaCategoria(const char * categ,const t_fecha* fechaNac,const t_fecha * f_proceso);
 int fNacValido(const t_fecha* fechaNac,const t_fecha * f_proceso);
 int fAfiliacionValido(const t_fecha* fechaAfi, const t_fecha* fechaProc, const t_fecha* fechaNac);

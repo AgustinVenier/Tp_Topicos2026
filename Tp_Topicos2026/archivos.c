@@ -35,10 +35,10 @@ static int asegurar_capacidad(t_miembro **vec, size_t *capacidad, size_t necesar
     return OK;
 }
 
-static int asegurar_capacidad_titulos(t_titulo **vec, size_t *capacidad, size_t necesaria)
+static int asegurar_capacidad_titulos(t_titulos **vec, size_t *capacidad, size_t necesaria)
 {
     size_t nueva_capacidad;
-    t_titulo *aux;
+    t_titulos *aux;
 
     if (necesaria <= *capacidad)
         return OK;
@@ -47,7 +47,7 @@ static int asegurar_capacidad_titulos(t_titulo **vec, size_t *capacidad, size_t 
     while (nueva_capacidad < necesaria)
         nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
 
-    aux = realloc(*vec, nueva_capacidad * sizeof(t_titulo));
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_titulos));
     if (!aux)
         return ERROR;
 
@@ -56,10 +56,12 @@ static int asegurar_capacidad_titulos(t_titulo **vec, size_t *capacidad, size_t 
     return OK;
 }
 
+
 static int parsear_miembro(const char *linea, t_miembro *miembro)
 {
     char copia[BUFFER + 200];
     char *fin;
+    char dni_str[20];
 
     strncpy(copia, linea, sizeof(copia) - 1);
     copia[sizeof(copia) - 1] = '\0';
@@ -85,6 +87,9 @@ static int parsear_miembro(const char *linea, t_miembro *miembro)
     {
         return ERROR;
     }
+
+    snprintf(dni_str, sizeof(dni_str), "%ld", miembro->dni);
+    obtenerCuil(dni_str, miembro->sexo, miembro->cuil);
 
     return OK;
 }
@@ -239,11 +244,11 @@ int miembros_construir_indice(const t_miembro *vec, size_t cantidad, t_indice *i
 }
 
 int titulos_cargar_desde_texto(const char *nombre_texto,
-                               t_titulo **vec, size_t *cantidad, size_t *capacidad)
+                               t_titulos **vec, size_t *cantidad, size_t *capacidad)
 {
     FILE *archivo;
     char linea[BUFFER + 200];
-    t_titulo titulo;
+    t_titulos titulo;
     int id = 1;
 
     archivo = fopen(nombre_texto, "rt");
@@ -269,6 +274,12 @@ int titulos_cargar_desde_texto(const char *nombre_texto,
             continue;
         }
 
+        normalizarGenero(titulo.titulo);
+        normalizarGenero(titulo.genero);
+
+        if (!stockValido(titulo.stock) || !generoValido(titulo.genero) || !estadoValido(titulo.estado))
+            continue;
+
         titulo.id = id++;
 
         if (asegurar_capacidad_titulos(vec, capacidad, *cantidad + 1) == ERROR)
@@ -286,16 +297,16 @@ int titulos_cargar_desde_texto(const char *nombre_texto,
 }
 
 int titulos_cargar_desde_binario(const char *nombre_binario,
-                                 t_titulo **vec, size_t *cantidad, size_t *capacidad)
+                                 t_titulos **vec, size_t *cantidad, size_t *capacidad)
 {
     FILE *archivo;
-    t_titulo titulo;
+    t_titulos titulo;
 
     archivo = fopen(nombre_binario, "rb");
     if (!archivo)
         return ERROR;
 
-    while (fread(&titulo, sizeof(t_titulo), 1, archivo) == 1)
+    while (fread(&titulo, sizeof(t_titulos), 1, archivo) == 1)
     {
         if (asegurar_capacidad_titulos(vec, capacidad, *cantidad + 1) == ERROR)
         {
@@ -312,7 +323,7 @@ int titulos_cargar_desde_binario(const char *nombre_binario,
 }
 
 int titulos_guardar_en_binario(const char *nombre_binario,
-                               const t_titulo *vec, size_t cantidad)
+                               const t_titulos *vec, size_t cantidad)
 {
     FILE *archivo;
     char carpeta[64];
@@ -334,7 +345,7 @@ int titulos_guardar_en_binario(const char *nombre_binario,
     if (!archivo)
         return ERROR;
 
-    if (cantidad > 0 && fwrite(vec, sizeof(t_titulo), cantidad, archivo) != cantidad)
+    if (cantidad > 0 && fwrite(vec, sizeof(t_titulos), cantidad, archivo) != cantidad)
     {
         fclose(archivo);
         return ERROR;
@@ -344,7 +355,7 @@ int titulos_guardar_en_binario(const char *nombre_binario,
     return OK;
 }
 
-int titulos_construir_indice(const t_titulo *vec, size_t cantidad, t_indice *indice)
+int titulos_construir_indice(const t_titulos *vec, size_t cantidad, t_indice *indice)
 {
     size_t i;
     t_reg_indice_titulo reg;
@@ -366,3 +377,4 @@ int titulos_construir_indice(const t_titulo *vec, size_t cantidad, t_indice *ind
 
     return OK;
 }
+
