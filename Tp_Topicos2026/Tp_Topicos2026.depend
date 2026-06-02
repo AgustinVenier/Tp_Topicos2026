@@ -18,3 +18,57 @@
 	<ctype.h>
 	<string.h>
 
+1780411419 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\archivos.c
+	"archivos.h"
+	"validaciones.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<direct.h>
+	<sys/stat.h>
+
+1780429561 c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\archivos.h
+	"indice.h"
+
+1780429561 c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\indice.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"estructuras.h"
+
+1780411419 c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\estructuras.h
+
+1780411419 c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\validaciones.h
+	"estructuras.h"
+	<ctype.h>
+	<string.h>
+
+1780411419 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\indice.c
+	"indice.h"
+	"validaciones.h"
+
+1780412219 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\main.c
+	<stdio.h>
+	<stdlib.h>
+	"archivos.h"
+	"indice.h"
+	"menu.h"
+	"validaciones.h"
+
+1780411419 c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\menu.h
+	<stddef.h>
+	"archivos.h"
+
+1780411493 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\menu.c
+	"menu.h"
+	"validaciones.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
+1780411419 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\validaciones.c
+	"validaciones.h"
+	<stdio.h>
+

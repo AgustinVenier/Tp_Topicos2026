@@ -1,142 +1,368 @@
-int pasajeTextoBinario(char * nombreArchivoTexto, char * nombreArchivoBin, const t_fecha* f_proceso,t_indice * indice,int (*cmp)(const void *, const void *))
+#include "archivos.h"
+#include "validaciones.h"
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir_if_needed(path) _mkdir(path)
+#else
+#include <sys/stat.h>
+#define mkdir_if_needed(path) mkdir(path, 0777)
+#endif
+
+static int asegurar_capacidad(t_miembro **vec, size_t *capacidad, size_t necesaria)
 {
-    char cad[BUFFER],aux[BUFFER+30],*ptr_fin;
-    t_miembro m1;
-    t_miembro *miembro = &m1;
-    t_reg_indice auxReg;
-    int valor,seInserta,contador=0;
-    FILE* fbin;
-    FILE* ftexto;
+    size_t nueva_capacidad;
+    t_miembro *aux;
 
-    ftexto = fopen(nombreArchivoTexto, "rt");
-    if (ftexto == NULL)
-    {
-        printf("Error al abrir un archivo texto");
+    if (necesaria <= *capacidad)
+        return OK;
+
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_miembro));
+    if (!aux)
         return ERROR;
-    }
 
-    fbin = fopen(nombreArchivoBin, "wb");
-    if (fbin == NULL)
-    {
-        printf("Error al abrir un archivo binario");
-        fclose(ftexto);
-        fclose(ferror);
-        return ERROR;
-    }
-
-    //CARGAMOS
-
-    while(fgets(cad, sizeof(cad), ftexto))
-    {
-
-        ptr_fin= strpbrk(cad, "\r\n");
-        if (ptr_fin) {
-            *ptr_fin = '\0';
-        }
-        *(miembro->email) = '\0';
-        sscanf(cad,
-               "%ld|%60[^|]|%d/%d/%d|%c|%d/%d/%d|%10[^|]|%d/%d/%d|%c|%9[^|]|%29[^\n]",
-               &miembro->dni,miembro->nya, &miembro->fecha_nac.dia, &miembro->fecha_nac.mes,
-               &miembro->fecha_nac.anio, &miembro->sexo, &miembro->fecha_afi.dia, &miembro->fecha_afi.mes,
-               &miembro->fecha_afi.anio, miembro->cat, &miembro->fecha_cuota.dia, &miembro->fecha_cuota.mes,
-               &miembro->fecha_cuota.anio, &miembro->estado, miembro->plan, miembro->email
-              );
-        valor = validaciones(miembro,f_proceso);
-
-        auxReg.dni=miembro->dni;
-        auxReg.nro_reg=contador;
-
-        if(valor == OK)
-        {
-            if(toupper(miembro->estado)=='A')
-                seInserta=indice_insertar(indice,&auxReg,sizeof(t_reg_indice),cmp);
-            else
-                seInserta=-1;
-
-            if(seInserta==OK)
-            {
-                contador++;
-                fwrite(miembro, sizeof(t_miembro), 1, fbin);
-            }
-            else
-            {
-                if(seInserta==-1)
-                {
-                    fwrite(miembro, sizeof(t_miembro), 1, fbin);
-                    contador++;
-                }
-                else
-                    valor=10;
-            }
-        }
-    fclose(ftexto);
-    fclose(fbin);
+    *vec = aux;
+    *capacidad = nueva_capacidad;
     return OK;
 }
 
-void LeeSubCarpeta (char* subCarpeta,char* nombreArchivo)
+static int asegurar_capacidad_titulos(t_titulo **vec, size_t *capacidad, size_t necesaria)
 {
-    struct dirent *dir;
-    DIR *d = opendir(subCarpeta);
-    int flag=0;
+    size_t nueva_capacidad;
+    t_titulo *aux;
 
-    if (!d)
-    {
-        perror("opendir() error");
-        *nombreArchivo=' ';
-        return ; // La subcarpeta no existe o no se puede leer
-    }
+    if (necesaria <= *capacidad)
+        return OK;
 
-    while ((dir = readdir(d)) != NULL && flag==0)
-    {
-        if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0)
-        {
-            strcpy(nombreArchivo, dir->d_name);
-            flag=1;
-        }
-        else
-            *nombreArchivo=' ';
-    }
-    closedir(d); // Cerramos el directorio
-    return ;
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_titulo));
+    if (!aux)
+        return ERROR;
+
+    *vec = aux;
+    *capacidad = nueva_capacidad;
+    return OK;
 }
 
-int crearNombreArchivo(char *nombreArchivoBinario, const char *subcarpeta_binario,const t_fecha *pf)
+static int parsear_miembro(const char *linea, t_miembro *miembro)
 {
-    char aux_fecha[10], aux_nombre[61];
+    char copia[BUFFER + 200];
+    char *fin;
 
-    if (*nombreArchivoBinario == ' ')
+    strncpy(copia, linea, sizeof(copia) - 1);
+    copia[sizeof(copia) - 1] = '\0';
+
+    fin = strpbrk(copia, "\r\n");
+    if (fin)
+        *fin = '\0';
+
+    memset(miembro, 0, sizeof(*miembro));
+
+    if (sscanf(copia,
+               "%ld|%60[^|]|%d/%d/%d|%c|%d/%d/%d|%10[^|]|%d/%d/%d|%c|%10[^|]|%30[^\r\n]",
+               &miembro->dni,
+               miembro->nya,
+               &miembro->fecha_nac.dia, &miembro->fecha_nac.mes, &miembro->fecha_nac.anio,
+               &miembro->sexo,
+               &miembro->fecha_afi.dia, &miembro->fecha_afi.mes, &miembro->fecha_afi.anio,
+               miembro->cat,
+               &miembro->fecha_cuota.dia, &miembro->fecha_cuota.mes, &miembro->fecha_cuota.anio,
+               &miembro->estado,
+               miembro->plan,
+               miembro->email) != 16)
     {
-        printf("No hay archivos para recuperar, se generaran nuevos.\n");
-
-        strcpy(nombreArchivoBinario,subcarpeta_binario);
-        strcat(nombreArchivoBinario, "/miembros-VC-");
-        sprintf(aux_fecha,"%04d%02d%02d",pf->anio,pf->mes,pf->dia);
-        strcat(nombreArchivoBinario,aux_fecha);
-        strcat(nombreArchivoBinario,".dat");
-
-        return ERROR; // Procesar
+        return ERROR;
     }
-    else
+
+    return OK;
+}
+
+static int validar_miembro(const t_miembro *miembro, const t_fecha *fecha_proceso)
+{
+    if (!dniValido(miembro->dni))
+        return ERROR;
+
+    if (!sexValido(miembro->sexo))
+        return ERROR;
+
+    if (!estadoValido(miembro->estado))
+        return ERROR;
+
+    if (!planValido(miembro->plan))
+        return ERROR;
+
+    if (fNacValido(&miembro->fecha_nac, fecha_proceso) == ERROR)
+        return ERROR;
+
+    if (fAfiliacionValido(&miembro->fecha_afi, fecha_proceso, &miembro->fecha_nac) == ERROR)
+        return ERROR;
+
+    if (fUltCoutaValido(&miembro->fecha_cuota, &miembro->fecha_afi, fecha_proceso) == ERROR)
+        return ERROR;
+
+    if (validarFechaCategoria(miembro->cat, &miembro->fecha_nac, fecha_proceso) == ERROR)
+        return ERROR;
+
+    if (validarEmail(miembro->email) == ERROR)
+        return ERROR;
+
+    return OK;
+}
+
+int miembros_cargar_desde_texto(const char *nombre_texto, const t_fecha *fecha_proceso,
+                                t_miembro **vec, size_t *cantidad, size_t *capacidad)
+{
+    FILE *archivo;
+    char linea[BUFFER + 200];
+    t_miembro miembro;
+
+    archivo = fopen(nombre_texto, "rt");
+    if (!archivo)
+        return ERROR;
+
+    while (fgets(linea, sizeof(linea), archivo))
     {
-        strcpy(aux_nombre,subcarpeta_binario);
-        strcat(aux_nombre,"/");
-        strcat(aux_nombre,nombreArchivoBinario);
-        strcpy(nombreArchivoBinario,subcarpeta_binario);
-        strcat(nombreArchivoBinario, "/miembros-VC-");
-        sprintf(aux_fecha,"%04d%02d%02d",pf->anio,pf->mes,pf->dia);
-        strcat(nombreArchivoBinario,aux_fecha);
-        strcat(nombreArchivoBinario,".dat");
+        if (parsear_miembro(linea, &miembro) == ERROR)
+            continue;
 
-        printf("Recuperando desde: %s\nLuego de finalizar se guardara con el nombre: %s\n",aux_nombre,nombreArchivoBinario);
-        if ((rename(aux_nombre,nombreArchivoBinario)) == 0)
+        normalizar(miembro.nya);
+
+        if (validar_miembro(&miembro, fecha_proceso) == ERROR)
+            continue;
+
+        if (asegurar_capacidad(vec, capacidad, *cantidad + 1) == ERROR)
         {
-            printf("Archivo renombrado exitosamente!\n\n");
+            fclose(archivo);
+            return ERROR;
         }
-        else    // Si falla, imprime el error del sistema
-        {
-            perror("Error al renombrar el archivo");
-        }
-        return OK; // Recuperar
+
+        (*vec)[*cantidad] = miembro;
+        (*cantidad)++;
     }
+
+    fclose(archivo);
+    return OK;
+}
+
+int miembros_cargar_desde_binario(const char *nombre_binario,
+                                  t_miembro **vec, size_t *cantidad, size_t *capacidad)
+{
+    FILE *archivo;
+    t_miembro miembro;
+
+    archivo = fopen(nombre_binario, "rb");
+    if (!archivo)
+        return ERROR;
+
+    while (fread(&miembro, sizeof(t_miembro), 1, archivo) == 1)
+    {
+        if (asegurar_capacidad(vec, capacidad, *cantidad + 1) == ERROR)
+        {
+            fclose(archivo);
+            return ERROR;
+        }
+
+        (*vec)[*cantidad] = miembro;
+        (*cantidad)++;
+    }
+
+    fclose(archivo);
+    return OK;
+}
+
+int miembros_guardar_en_binario(const char *nombre_binario,
+                                const t_miembro *vec, size_t cantidad)
+{
+    FILE *archivo;
+    char carpeta[64];
+    const char *slash;
+
+    slash = strrchr(nombre_binario, '/');
+    if (slash)
+    {
+        size_t len = (size_t)(slash - nombre_binario);
+        if (len >= sizeof(carpeta))
+            return ERROR;
+
+        memcpy(carpeta, nombre_binario, len);
+        carpeta[len] = '\0';
+        mkdir_if_needed(carpeta);
+    }
+
+    archivo = fopen(nombre_binario, "wb");
+    if (!archivo)
+        return ERROR;
+
+    if (cantidad > 0 && fwrite(vec, sizeof(t_miembro), cantidad, archivo) != cantidad)
+    {
+        fclose(archivo);
+        return ERROR;
+    }
+
+    fclose(archivo);
+    return OK;
+}
+
+int miembros_construir_indice(const t_miembro *vec, size_t cantidad, t_indice *indice)
+{
+    size_t i;
+    t_reg_indice reg;
+
+    if (!indice->vindice)
+        indice_crear(indice, CANT_ELEMENTOS, sizeof(t_reg_indice));
+
+    for (i = 0; i < cantidad; i++)
+    {
+        if (toupper((unsigned char)vec[i].estado) != 'A')
+            continue;
+
+        reg.dni = vec[i].dni;
+        reg.nro_reg = (unsigned)i;
+
+        if (indice_insertar(indice, &reg, sizeof(t_reg_indice), cmp_por_dni) == ERROR)
+            return ERROR;
+    }
+
+    return OK;
+}
+
+int titulos_cargar_desde_texto(const char *nombre_texto,
+                               t_titulo **vec, size_t *cantidad, size_t *capacidad)
+{
+    FILE *archivo;
+    char linea[BUFFER + 200];
+    t_titulo titulo;
+    int id = 1;
+
+    archivo = fopen(nombre_texto, "rt");
+    if (!archivo)
+        return ERROR;
+
+    if (!fgets(linea, sizeof(linea), archivo))
+    {
+        fclose(archivo);
+        return OK;
+    }
+
+    while (fgets(linea, sizeof(linea), archivo))
+    {
+        char *fin = strpbrk(linea, "\r\n");
+        if (fin)
+            *fin = '\0';
+
+        memset(&titulo, 0, sizeof(titulo));
+        if (sscanf(linea, "%60[^|]|%20[^|]|%d|%c", titulo.titulo, titulo.genero,
+                   &titulo.stock, &titulo.estado) != 4)
+        {
+            continue;
+        }
+
+        titulo.id = id++;
+
+        if (asegurar_capacidad_titulos(vec, capacidad, *cantidad + 1) == ERROR)
+        {
+            fclose(archivo);
+            return ERROR;
+        }
+
+        (*vec)[*cantidad] = titulo;
+        (*cantidad)++;
+    }
+
+    fclose(archivo);
+    return OK;
+}
+
+int titulos_cargar_desde_binario(const char *nombre_binario,
+                                 t_titulo **vec, size_t *cantidad, size_t *capacidad)
+{
+    FILE *archivo;
+    t_titulo titulo;
+
+    archivo = fopen(nombre_binario, "rb");
+    if (!archivo)
+        return ERROR;
+
+    while (fread(&titulo, sizeof(t_titulo), 1, archivo) == 1)
+    {
+        if (asegurar_capacidad_titulos(vec, capacidad, *cantidad + 1) == ERROR)
+        {
+            fclose(archivo);
+            return ERROR;
+        }
+
+        (*vec)[*cantidad] = titulo;
+        (*cantidad)++;
+    }
+
+    fclose(archivo);
+    return OK;
+}
+
+int titulos_guardar_en_binario(const char *nombre_binario,
+                               const t_titulo *vec, size_t cantidad)
+{
+    FILE *archivo;
+    char carpeta[64];
+    const char *slash;
+
+    slash = strrchr(nombre_binario, '/');
+    if (slash)
+    {
+        size_t len = (size_t)(slash - nombre_binario);
+        if (len >= sizeof(carpeta))
+            return ERROR;
+
+        memcpy(carpeta, nombre_binario, len);
+        carpeta[len] = '\0';
+        mkdir_if_needed(carpeta);
+    }
+
+    archivo = fopen(nombre_binario, "wb");
+    if (!archivo)
+        return ERROR;
+
+    if (cantidad > 0 && fwrite(vec, sizeof(t_titulo), cantidad, archivo) != cantidad)
+    {
+        fclose(archivo);
+        return ERROR;
+    }
+
+    fclose(archivo);
+    return OK;
+}
+
+int titulos_construir_indice(const t_titulo *vec, size_t cantidad, t_indice *indice)
+{
+    size_t i;
+    t_reg_indice_titulo reg;
+
+    if (!indice->vindice)
+        indice_crear(indice, CANT_ELEMENTOS, sizeof(t_reg_indice_titulo));
+
+    for (i = 0; i < cantidad; i++)
+    {
+        if (toupper((unsigned char)vec[i].estado) != 'A')
+            continue;
+
+        reg.id = vec[i].id;
+        reg.nro_reg = (unsigned)i;
+
+        if (indice_insertar(indice, &reg, sizeof(t_reg_indice_titulo), cmp_por_id) == ERROR)
+            return ERROR;
+    }
+
+    return OK;
 }

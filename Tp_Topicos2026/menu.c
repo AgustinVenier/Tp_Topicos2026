@@ -1,13 +1,62 @@
-void menu(const char *nombreArch, t_indice *ind, const t_fecha *fecha)
+#include "menu.h"
+#include "validaciones.h"
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static void limpiarBuffer(void)
+{
+    int c;
+
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+}
+
+static int asegurar_capacidad_registros(t_miembro **vec, size_t *capacidad, size_t necesaria)
+{
+    size_t nueva_capacidad;
+    t_miembro *aux;
+
+    if (necesaria <= *capacidad)
+        return OK;
+
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_miembro));
+    if (!aux)
+        return ERROR;
+
+    *vec = aux;
+    *capacidad = nueva_capacidad;
+    return OK;
+}
+
+static void imprimir_miembro(const t_miembro *m)
+{
+    printf("DNI: %ld\n", m->dni);
+    printf("Nombre y Apellido: %s\n", m->nya);
+    printf("Fecha de Nacimiento: %02d/%02d/%04d\n", m->fecha_nac.dia, m->fecha_nac.mes, m->fecha_nac.anio);
+    printf("Sexo: %c\n", m->sexo);
+    printf("Fecha de Afiliacion: %02d/%02d/%04d\n", m->fecha_afi.dia, m->fecha_afi.mes, m->fecha_afi.anio);
+    printf("Categoria: %s\n", m->cat);
+    printf("Fecha de ultima Cuota: %02d/%02d/%04d\n", m->fecha_cuota.dia, m->fecha_cuota.mes, m->fecha_cuota.anio);
+    printf("Estado: %c\n", m->estado);
+    printf("Plan: %s\n", m->plan);
+    printf("Email: %s\n", m->email);
+}
+
+void menu(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *ind, const t_fecha *fecha)
 {
     char op;
     int resultado;
+
     do
     {
-
         printf("\n");
-
-
         op = mostrarMenu(
                  "a. Alta miembro\n"
                  "b. Alta titulo\n"
@@ -22,62 +71,46 @@ void menu(const char *nombreArch, t_indice *ind, const t_fecha *fecha)
                  "k. Salir\n",
                  "abcdefghijk"
              );
+
         switch(op)
         {
         case 'a':
-            resultado = AltaMiembro(nombreArch,ind, fecha);
-            if (resultado == ERROR)
-                printf("\nError al dar de alta el miembro.\n");
-            else
-                printf("\nAlta realizada con exito.\n");
-            sleep(2);
-            system("cls");
+            resultado = AltaMiembro(vec, cantidad, capacidad, ind, fecha);
+            printf(resultado == ERROR ? "\nError al dar de alta el miembro.\n" : "\nAlta realizada con exito.\n");
+            break;
+
+        case 'b':
+        case 'd':
+        case 'f':
+        case 'h':
+            printf("\nOpcion no implementada en esta entrega.\n");
             break;
 
         case 'c':
-            resultado = BajaMiembro(nombreArch, ind);
-            if (resultado == ERROR)
-                printf("\nError al dar la baja del miembro.\n");
-            else
-                printf("\nBaja realizada con exito.\n");
-            sleep(2);
-            system("cls");
+            resultado = BajaMiembro(*vec, ind);
+            printf(resultado == ERROR ? "\nError al dar la baja del miembro.\n" : "\nBaja realizada con exito.\n");
             break;
 
         case 'e':
-            resultado = ModificacionMiembro(nombreArch, ind, fecha);
-            if (resultado == ERROR)
-                printf("\nError al modificar el miembro.\n");
-            else
-                printf("\nModificacion realizada con exito.\n");
-            sleep(2);
-            system("cls");
+            resultado = ModificacionMiembro(*vec, ind, fecha);
+            printf(resultado == ERROR ? "\nError al modificar el miembro.\n" : "\nModificacion realizada con exito.\n");
             break;
 
         case 'g':
-            resultado = MostrarInfoMiembro(nombreArch,ind);
-            if (resultado == ERROR)
-                printf("\nError al mostrar\n");
-            else
-                printf("\nRealizada con exito.\n");
+            resultado = MostrarInfoMiembro(*vec, ind);
+            printf(resultado == ERROR ? "\nError al mostrar\n" : "\nRealizada con exito.\n");
             system("pause");
             break;
 
         case 'i':
-            resultado = ListadoXDNI(nombreArch, ind);
-            if (resultado == ERROR)
-                printf("\nError al listar\n");
-            else
-                printf("\nRealizada con exito.\n");
+            resultado = ListadoXDNI(*vec, ind);
+            printf(resultado == ERROR ? "\nError al listar\n" : "\nRealizada con exito.\n");
             system("pause");
             break;
 
         case 'j':
-            resultado = ListadoXPlan(nombreArch, ind);
-            if (resultado == ERROR)
-                printf("\nError al Listar\n");
-            else
-                printf("\nRealizada con exito.\n");
+            resultado = ListadoXPlan(*vec, ind);
+            printf(resultado == ERROR ? "\nError al Listar\n" : "\nRealizada con exito.\n");
             system("pause");
             break;
         }
@@ -94,666 +127,387 @@ void eliminarFinDeLinea(char *cad)
 
 char mostrarMenu(const char *msj, const char *opc)
 {
-    char opta;
+    char opta[32];
     int priVez = 1;
+
     printf("\n===================================================\n");
     printf("              GESTION DE MIEMBROS\n");
     printf("===================================================\n");
+
     do
     {
-        fflush(stdin);
         printf("%s%s",
-               priVez ? priVez = 0, "" : "ERROR - Opcion No valida\n",
+               priVez ? (priVez = 0, "") : "ERROR - Opcion No valida\n",
                msj);
         printf("\nIngrese seleccion: ");
-        scanf("%c", &opta);
+        if (!fgets(opta, sizeof(opta), stdin))
+            return 'k';
+        eliminarFinDeLinea(opta);
+        if (opta[0] == '\0')
+            continue;
     }
-    while(strchr(opc, opta) == NULL);    //busca el carácter dentro del conjunto de válidos
-    return opta;
+    while(strchr(opc, opta[0]) == NULL || opta[1] != '\0');
+
+    return opta[0];
 }
 
-int AltaMiembro(const char *nombreArch, t_indice *ind, const t_fecha *fecha)
+void preguntarCambio(const char *cad, char* aux)
 {
-    t_miembro m;    //nuevo registro completo que se va a dar de alta
-    t_reg_indice reg; // Estructura auxiliar: Se usa tanto para buscar como para insertar en el índice
-    int pos, op,validar;
+    printf("Desea modificar %s? (S/N): ", cad);
+    scanf(" %c", aux);
+    limpiarBuffer();
+}
 
-    FILE *pf = fopen(nombreArch, "r+b");
-    if (!pf)
+int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *ind, const t_fecha *fecha)
+{
+    t_miembro m;
+    t_reg_indice reg;
+    long dni;
+    int validar;
+
+    memset(&m, 0, sizeof(m));
+
+    printf("\nIngrese DNI: ");
+    if (scanf("%ld", &dni) != 1)
     {
-        printf("No se pudo abrir el archivo");
+        limpiarBuffer();
         return ERROR;
     }
-    // Calculo la posición física en el archivo
-    fseek(pf, 0, SEEK_END);
-    unsigned nro_reg = ftell(pf) / sizeof(t_miembro);
+    limpiarBuffer();
 
-    // Ingreso datos del nuevo miembro
-    printf("\n\nIngrese DNI: ");
-    scanf("%ld", &m.dni);
-    fflush(stdin);
-    reg.dni = m.dni;
+    if (!dniValido(dni))
+        return ERROR;
 
-    // Valido si ya existe en el índice
-    pos = indice_buscar(ind, &reg, ind->cantidad_elementos_actual, sizeof(t_reg_indice), cmp_por_dni);
-    if (pos != NO_EXISTE)
+    reg.dni = dni;
+    if (indice_buscar(ind, &reg, ind->cantidad_elementos_actual, sizeof(t_reg_indice), cmp_por_dni) != NO_EXISTE)
     {
-        printf("Error: ya existe un miembro con DNI %ld.\n", m.dni);
-        fclose(pf);
+        printf("Error: ya existe un miembro con DNI %ld.\n", dni);
         return ERROR;
     }
 
-    //inicializar lo que falta de t_reg
-    reg.nro_reg = nro_reg;
+    m.dni = dni;
 
-    //Ingreso del resto de los datos
     printf("Ingrese Apellido y Nombre: ");
-    fgets(m.nya, sizeof(m.nya), stdin);
+    if (!fgets(m.nya, sizeof(m.nya), stdin))
+        return ERROR;
     eliminarFinDeLinea(m.nya);
     normalizar(m.nya);
 
     do
     {
         printf("Ingrese sexo (M/F): ");
-        scanf("%c", &m.sexo);
-        fflush(stdin);
-        validar = !sexValido(m.sexo);
+        if (scanf(" %c", &m.sexo) != 1)
+            return ERROR;
+        limpiarBuffer();
+        validar = sexValido(m.sexo) ? OK : ERROR;
         if (validar == ERROR)
-        {
-            printf("\nIngreso Incorrecto.\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
-        }
+            printf("Ingreso Incorrecto.\n");
     }
-    while (validar==ERROR);
-
+    while (validar == ERROR);
 
     do
     {
         printf("Ingrese fecha de nacimiento (dd/mm/aaaa): ");
-        scanf("%d/%d/%d", &m.fecha_nac.dia, &m.fecha_nac.mes, &m.fecha_nac.anio);
-        fflush(stdin);
-
-        validar= fNacValido(&m.fecha_nac,fecha);
-
-        if(validar == ERROR )
-        {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
-        }
+        if (scanf("%d/%d/%d", &m.fecha_nac.dia, &m.fecha_nac.mes, &m.fecha_nac.anio) != 3)
+            return ERROR;
+        limpiarBuffer();
+        validar = fNacValido(&m.fecha_nac, fecha);
+        if(validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
     }
-    while(validar == ERROR );
-
-
+    while(validar == ERROR);
 
     do
     {
         printf("Ingrese fecha de afiliacion (dd/mm/aaaa): ");
-        scanf("%d/%d/%d", &m.fecha_afi.dia, &m.fecha_afi.mes, &m.fecha_afi.anio);
-        fflush(stdin);
-        validar =fAfiliacionValido(&m.fecha_afi,fecha,&m.fecha_nac);
-
-        if(validar== ERROR)
-        {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
-        }
+        if (scanf("%d/%d/%d", &m.fecha_afi.dia, &m.fecha_afi.mes, &m.fecha_afi.anio) != 3)
+            return ERROR;
+        limpiarBuffer();
+        validar = fAfiliacionValido(&m.fecha_afi, fecha, &m.fecha_nac);
+        if(validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
     }
-    while(validar== ERROR);
+    while(validar == ERROR);
 
     do
     {
         printf("Ingrese categoria (MENOR/ADULTO): ");
-        fgets(m.cat, sizeof(m.cat), stdin);
+        if (!fgets(m.cat, sizeof(m.cat), stdin))
+            return ERROR;
         eliminarFinDeLinea(m.cat);
-        validar= validarFechaCategoria(m.cat,&m.fecha_nac,fecha);
-
-        if(validar== ERROR)
-        {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
-        }
+        validar = validarFechaCategoria(m.cat, &m.fecha_nac, fecha);
+        if(validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
     }
-    while(validar== ERROR);
-
-
+    while(validar == ERROR);
 
     do
     {
         printf("Ingrese fecha de ultima cuota paga (dd/mm/aaaa): ");
-        scanf("%d/%d/%d", &m.fecha_cuota.dia, &m.fecha_cuota.mes, &m.fecha_cuota.anio);
-        fflush(stdin);
-        validar= fUltCoutaValido(&m.fecha_cuota,&m.fecha_afi,fecha);
-
-        if(validar==ERROR)
-        {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
-        }
+        if (scanf("%d/%d/%d", &m.fecha_cuota.dia, &m.fecha_cuota.mes, &m.fecha_cuota.anio) != 3)
+            return ERROR;
+        limpiarBuffer();
+        validar = fUltCoutaValido(&m.fecha_cuota, &m.fecha_afi, fecha);
+        if(validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
     }
-    while(validar==ERROR);
-    m.estado='A';
-
+    while(validar == ERROR);
 
     do
     {
         printf("Ingrese plan (BASIC/PREMIUM/VIP/FAMILY): ");
-        fgets(m.plan, sizeof(m.plan), stdin);
+        if (!fgets(m.plan, sizeof(m.plan), stdin))
+            return ERROR;
         eliminarFinDeLinea(m.plan);
-        validar= !planValido(m.plan);
-               if(validar==ERROR)
-        {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
-        }
+        validar = planValido(m.plan) ? OK : ERROR;
+        if(validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
     }
-    while(validar==ERROR);
+    while(validar == ERROR);
 
-    if(strcmpi(m.cat,"MENOR")== 0)
+    do
     {
-        do
-        {
-            printf("Ingrese email: ");
-            fgets(m.email, sizeof(m.email), stdin);
-            eliminarFinDeLinea(m.email);
-            validar= validarEmail(m.email);
-            if(validar==ERROR)
-            {
-                printf("\n Ingreso Incorrecto\n");
-                printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-                scanf("%d", &op);
-                fflush(stdin);
-                if (op == 0)
-                {
-                    return ERROR; // Vuelve al menú principal
-                }
-            }
-        }
-        while(validar ==ERROR);
+        printf("Ingrese email: ");
+        if (!fgets(m.email, sizeof(m.email), stdin))
+            return ERROR;
+        eliminarFinDeLinea(m.email);
+        validar = validarEmail(m.email);
+        if(validar == ERROR)
+            printf("Ingreso Incorrecto.\n");
     }
-// Escribir al final:
-    fseek(pf, 0, SEEK_END);
-    fwrite(&m, sizeof(t_miembro), 1, pf);
-    fflush(pf);
+    while(validar == ERROR);
 
-// Insertar en el  índice:
-    if(indice_insertar(ind, &reg, sizeof(t_reg_indice), cmp_por_dni) != OK)
-    {
-        fclose(pf);
+    m.estado = 'A';
+
+    if (asegurar_capacidad_registros(vec, capacidad, *cantidad + 1) == ERROR)
         return ERROR;
-    }
-    else
-        printf("Alta realizada. DNI=%ld, nro_reg=%u\n", reg.dni, reg.nro_reg);
-    fclose(pf);
+
+    reg.nro_reg = (unsigned)(*cantidad);
+    if (indice_insertar(ind, &reg, sizeof(t_reg_indice), cmp_por_dni) == ERROR)
+        return ERROR;
+
+    (*vec)[*cantidad] = m;
+    (*cantidad)++;
     return OK;
 }
 
-int BajaMiembro(const char *nombreArch, t_indice *ind)
+int BajaMiembro(t_miembro *vec, t_indice *ind)
 {
-    int pos;
-    t_miembro m;
+    long dni;
     t_reg_indice clave;
-    t_reg_indice *vec;
-    FILE *pf;
-    unsigned nro_reg;
-    // Solicito DNI y lo asigno a la clave
+    int pos;
+
     printf("DNI a dar de baja: ");
-    scanf("%ld", &m.dni);
-    clave.dni = m.dni;
-    // Busco posición en el índice
+    if (scanf("%ld", &dni) != 1)
+        return ERROR;
+    limpiarBuffer();
+
+    clave.dni = dni;
     pos = indice_buscar(ind, &clave, ind->cantidad_elementos_actual, sizeof(t_reg_indice), cmp_por_dni);
     if (pos == NO_EXISTE)
-    {
-        printf("No existe miembro con DNI %ld\n", clave.dni);
         return ERROR;
-    }
-    // Accede al vector de índices para obtener el número de registro físico
-    vec = (t_reg_indice*)ind->vindice;
-    nro_reg = (vec+pos)->nro_reg;
 
-    pf = fopen(nombreArch, "r+b");
-    if (!pf)
-    {
-        printf("No se pudo abrir el archivo");
-        return ERROR;
-    }
-    // Leo el miembro desde el archivo
-    fseek(pf, nro_reg * sizeof(t_miembro), SEEK_SET);
-    fread(&m, sizeof(t_miembro), 1, pf);
-
-    m.estado = 'B';
-    fseek(pf, (long)-sizeof(t_miembro), SEEK_CUR);
-    fwrite(&m, sizeof(t_miembro), 1, pf);
-
-    fclose(pf);
-    if(indice_eliminar(ind, &clave, sizeof(t_reg_indice), cmp_por_dni)==ERROR)
-    {
-        return ERROR;
-    }
-    return OK;
+    vec[((t_reg_indice *)ind->vindice)[pos].nro_reg].estado = 'B';
+    return indice_eliminar(ind, &clave, sizeof(t_reg_indice), cmp_por_dni);
 }
 
-int ModificacionMiembro(const char *nombreArch, t_indice *ind, const t_fecha *fecha)
+int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
 {
-    t_miembro m;
+    long dni;
     t_reg_indice clave;
+    int pos;
     char aux;
-    FILE *pf;
-    int pos,validar,op;
-    t_reg_indice *vec;
+    t_miembro *m;
+    int validar;
 
     printf("\n=== MODIFICACION DE MIEMBRO ===\n");
     printf("Ingrese DNI a modificar: ");
-    scanf("%ld", &m.dni);
-    getchar();
-    clave.dni = m.dni;
+    if (scanf("%ld", &dni) != 1)
+        return ERROR;
+    limpiarBuffer();
 
+    clave.dni = dni;
     pos = indice_buscar(ind, &clave, ind->cantidad_elementos_actual, sizeof(t_reg_indice), cmp_por_dni);
     if(pos == NO_EXISTE)
-    {
-        printf("No se encontro el DNI.\n");
         return ERROR;
-    }
 
-    pf = fopen(nombreArch, "r+b");
-    if(!pf)
-    {
-        printf("\nError al abrir archivo binario");
-        return ERROR;
-    }
-    vec = (t_reg_indice *)ind->vindice; //casteo
-
-    // Posiciona el puntero en el registro correspondiente y lo lee
-    fseek(pf, (vec+pos)->nro_reg * sizeof(t_miembro), SEEK_SET);
-    fread(&m, sizeof(t_miembro), 1, pf);
-
-    printf("Modificando a: %s\n", m.nya);
+    m = &vec[((t_reg_indice *)ind->vindice)[pos].nro_reg];
+    printf("Modificando a: %s\n", m->nya);
 
     preguntarCambio("apellido y nombre", &aux);
-    if(toupper(aux) == 'S')
+    if(toupper((unsigned char)aux) == 'S')
     {
-        printf("Nuevo apellido y nombre: ");
-        fgets(m.nya, sizeof(m.nya), stdin);
-        eliminarFinDeLinea(m.nya);
-        normalizar(m.nya);
+        if (!fgets(m->nya, sizeof(m->nya), stdin))
+            return ERROR;
+        eliminarFinDeLinea(m->nya);
+        normalizar(m->nya);
     }
 
     preguntarCambio("fecha de nacimiento", &aux);
-    if(toupper(aux) == 'S')
+    if(toupper((unsigned char)aux) == 'S')
     {
-    do
-    {
-        printf("Ingrese fecha de nacimiento (dd/mm/aaaa): ");
-        scanf("%d/%d/%d", &m.fecha_nac.dia, &m.fecha_nac.mes, &m.fecha_nac.anio);
-        fflush(stdin);
-
-        validar= fNacValido(&m.fecha_nac,fecha);
-
-        if(validar == ERROR )
+        do
         {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
+            printf("Ingrese fecha de nacimiento (dd/mm/aaaa): ");
+            if (scanf("%d/%d/%d", &m->fecha_nac.dia, &m->fecha_nac.mes, &m->fecha_nac.anio) != 3)
+                return ERROR;
+            limpiarBuffer();
+            validar = fNacValido(&m->fecha_nac, fecha);
         }
-    }
-    while(validar == ERROR );
-
+        while(validar == ERROR);
     }
 
     preguntarCambio("sexo", &aux);
-    if(toupper(aux) == 'S')
+    if(toupper((unsigned char)aux) == 'S')
     {
-    do
-    {
-        printf("Ingrese sexo (M/F): ");
-        scanf("%c", &m.sexo);
-        fflush(stdin);
-        validar = !sexValido(m.sexo);
-        if (validar == ERROR)
+        do
         {
-            printf("\nIngreso Incorrecto.\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
+            printf("Ingrese sexo (M/F): ");
+            if (scanf(" %c", &m->sexo) != 1)
+                return ERROR;
+            limpiarBuffer();
+            validar = sexValido(m->sexo) ? OK : ERROR;
         }
-    }
-    while (validar==ERROR);
-
+        while(validar == ERROR);
     }
 
-    preguntarCambio("fecha de afiliacion: ", &aux);
-    if(toupper(aux) == 'S')
+    preguntarCambio("fecha de afiliacion", &aux);
+    if(toupper((unsigned char)aux) == 'S')
     {
-    do
-    {
-        printf("Ingrese fecha de afiliacion (dd/mm/aaaa): ");
-        scanf("%d/%d/%d", &m.fecha_afi.dia, &m.fecha_afi.mes, &m.fecha_afi.anio);
-        fflush(stdin);
-        validar =fAfiliacionValido(&m.fecha_afi,fecha,&m.fecha_nac);
-
-        if(validar== ERROR)
+        do
         {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
+            printf("Ingrese fecha de afiliacion (dd/mm/aaaa): ");
+            if (scanf("%d/%d/%d", &m->fecha_afi.dia, &m->fecha_afi.mes, &m->fecha_afi.anio) != 3)
+                return ERROR;
+            limpiarBuffer();
+            validar = fAfiliacionValido(&m->fecha_afi, fecha, &m->fecha_nac);
         }
-    }
-    while(validar== ERROR);
+        while(validar == ERROR);
     }
 
     preguntarCambio("categoria", &aux);
-    if(toupper(aux) == 'S')
+    if(toupper((unsigned char)aux) == 'S')
     {
-    do
-    {
-        printf("Ingrese categoria (MENOR/ADULTO): ");
-        fgets(m.cat, sizeof(m.cat), stdin);
-        eliminarFinDeLinea(m.cat);
-        validar= validarFechaCategoria(m.cat,&m.fecha_nac,fecha);
-
-        if(validar== ERROR)
+        do
         {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
+            printf("Ingrese categoria (MENOR/ADULTO): ");
+            if (!fgets(m->cat, sizeof(m->cat), stdin))
+                return ERROR;
+            eliminarFinDeLinea(m->cat);
+            validar = validarFechaCategoria(m->cat, &m->fecha_nac, fecha);
         }
-    }
-    while(validar== ERROR);
+        while(validar == ERROR);
     }
 
-    preguntarCambio("fecha de ultima cuota: ", &aux);
-    if(toupper(aux) == 'S')
+    preguntarCambio("fecha de ultima cuota", &aux);
+    if(toupper((unsigned char)aux) == 'S')
     {
-    do
-    {
-        printf("Ingrese fecha de ultima cuota paga (dd/mm/aaaa): ");
-        scanf("%d/%d/%d", &m.fecha_cuota.dia, &m.fecha_cuota.mes, &m.fecha_cuota.anio);
-        fflush(stdin);
-        validar= fUltCoutaValido(&m.fecha_cuota,&m.fecha_afi,fecha);
-
-        if(validar==ERROR)
+        do
         {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
+            printf("Ingrese fecha de ultima cuota paga (dd/mm/aaaa): ");
+            if (scanf("%d/%d/%d", &m->fecha_cuota.dia, &m->fecha_cuota.mes, &m->fecha_cuota.anio) != 3)
+                return ERROR;
+            limpiarBuffer();
+            validar = fUltCoutaValido(&m->fecha_cuota, &m->fecha_afi, fecha);
         }
-    }
-    while(validar==ERROR);
+        while(validar == ERROR);
     }
 
     preguntarCambio("plan", &aux);
-    if(toupper(aux) == 'S')
+    if(toupper((unsigned char)aux) == 'S')
     {
-    do
-    {
-        printf("Ingrese plan (BASIC/PREMIUM/VIP/FAMILY): ");
-        fgets(m.plan, sizeof(m.plan), stdin);
-        eliminarFinDeLinea(m.plan);
-        validar= !planValido(m.plan);
-               if(validar==ERROR)
+        do
         {
-            printf("\n Ingreso Incorrecto\n");
-            printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-            scanf("%d", &op);
-            fflush(stdin);
-            if (op == 0)
-            {
-                return ERROR; // Vuelve al menú principal
-            }
+            printf("Ingrese plan (BASIC/PREMIUM/VIP/FAMILY): ");
+            if (!fgets(m->plan, sizeof(m->plan), stdin))
+                return ERROR;
+            eliminarFinDeLinea(m->plan);
+            validar = planValido(m->plan) ? OK : ERROR;
         }
-    }
-    while(validar==ERROR);
+        while(validar == ERROR);
     }
 
-    if(strcmpi(m.cat,"MENOR")==0)
+    preguntarCambio("email", &aux);
+    if(toupper((unsigned char)aux) == 'S')
     {
-        preguntarCambio("email", &aux);
-        if(toupper(aux) == 'S')
-        {
         do
         {
             printf("Ingrese email: ");
-            fgets(m.email, sizeof(m.email), stdin);
-            eliminarFinDeLinea(m.email);
-            validar= validarEmail(m.email);
-            if(validar==ERROR)
-            {
-                printf("\n Ingreso Incorrecto\n");
-                printf("Presione cualquier tecla  para reintentar el ingreso de datos o 0 para volver al menu: ");
-                scanf("%d", &op);
-                fflush(stdin);
-                if (op == 0)
-                {
-                    return ERROR; // Vuelve al menú principal
-                }
-            }
+            if (!fgets(m->email, sizeof(m->email), stdin))
+                return ERROR;
+            eliminarFinDeLinea(m->email);
+            validar = validarEmail(m->email);
         }
-        while(validar ==ERROR);
-        }
+        while(validar == ERROR);
     }
 
-    fseek(pf, (vec+pos)->nro_reg * sizeof(t_miembro), SEEK_SET);
-    fwrite(&m, sizeof(t_miembro), 1, pf);
-    fclose(pf);
     return OK;
 }
 
-int MostrarInfoMiembro(const char *nombreArch, t_indice *ind)
+int MostrarInfoMiembro(t_miembro *vec, t_indice *ind)
 {
-    t_miembro m;
+    long dni;
     t_reg_indice clave;
     int pos;
-    FILE *pf;
-    t_reg_indice *vec;
 
     printf("\n============= INFORMACION DE MIEMBRO =============\n");
     printf("Ingrese DNI a visualizar: ");
-    scanf("%ld", &m.dni);
-    getchar();
-    clave.dni = m.dni;
+    if (scanf("%ld", &dni) != 1)
+        return ERROR;
+    limpiarBuffer();
 
+    clave.dni = dni;
     pos = indice_buscar(ind, &clave, ind->cantidad_elementos_actual, sizeof(t_reg_indice), cmp_por_dni);
     if(pos == NO_EXISTE)
-    {
-        printf("No se encontro el DNI.\n");
         return ERROR;
-    }
 
-    pf = fopen(nombreArch, "rb");
-    if(!pf)
-    {
-        printf("\nError al abrir archivo binario");
-        return ERROR;
-    }
-
-    vec = (t_reg_indice *)ind->vindice;
-    fseek(pf, (vec+pos)->nro_reg * sizeof(t_miembro), SEEK_SET);
-    fread(&m, sizeof(t_miembro), 1, pf);
-    printf("-  DNI: %8ld  -  Nombre: %-60s  -  FNac: %02d/%02d/%04d  -  Sexo: %c  -  FAfi: %02d/%02d/%04d  -  Categoria: %-10s  -  FUltCuota: %02d/%02d/%04d  -  Plan: %-10s  -  Email: %s\n", m.dni, m.nya, m.fecha_nac.dia,
-           m.fecha_nac.mes, m.fecha_nac.anio, m.sexo, m.fecha_afi.dia,m.fecha_afi.mes, m.fecha_afi.anio, m.cat, m.fecha_cuota.dia, m.fecha_cuota.mes, m.fecha_cuota.anio, m.plan, m.email);
-    fclose(pf);
+    imprimir_miembro(&vec[((t_reg_indice *)ind->vindice)[pos].nro_reg]);
     return OK;
 }
 
-int ListadoXDNI(const char *nombreArch, t_indice *ind)
+int ListadoXDNI(t_miembro *vec, t_indice *ind)
 {
     int i;
-    t_miembro m;
-    FILE *pf;
     t_reg_indice *vecOrig;
 
-    pf = fopen(nombreArch, "rb");
-    if(!pf)
-    {
-        printf("\nError al abrir archivo binario");
+    if (indice_vacio(ind) != ERROR)
         return ERROR;
-    }
 
-    if (indice_vacio(ind)!=ERROR)
-    {
-        printf("\nNo hay registros en el indice.\n");
-        fclose(pf);
-        return ERROR;
-    }
-
-    // Castear el índice original
     vecOrig = (t_reg_indice *)ind->vindice;
 
-
-    printf("\n\n=====================================================================================================================================================================================\n");
-    printf("                                                                                                    LISTADO POR DNI");
-    printf("\n======================================================================================================================================================================================\n");
-    for(i = 0; i < ind->cantidad_elementos_actual; i++)
+    printf("\n\n================ LISTADO POR DNI ================\n");
+    for(i = 0; i < (int)ind->cantidad_elementos_actual; i++)
     {
-        fseek(pf, (vecOrig+i)->nro_reg * sizeof(t_miembro), SEEK_SET);
-        fread(&m, sizeof(t_miembro), 1, pf);
-        printf("-  DNI: %8ld  -  Nombre: %-60s  -  FNac: %02d/%02d/%04d  -  Sexo: %c  -  FAfi: %02d/%02d/%04d  -  Categoria: %-10s  -  FUltCuota: %02d/%02d/%04d  -  Plan: %-10s  -  Email: %s\n", m.dni, m.nya, m.fecha_nac.dia,
-               m.fecha_nac.mes, m.fecha_nac.anio, m.sexo, m.fecha_afi.dia,m.fecha_afi.mes, m.fecha_afi.anio, m.cat, m.fecha_cuota.dia, m.fecha_cuota.mes, m.fecha_cuota.anio, m.plan, m.email); ///IMPRIMIR MAS CAMPOS
+        printf("- ");
+        imprimir_miembro(&vec[(vecOrig + i)->nro_reg]);
+        printf("--------------------------------------------------\n");
     }
-    fclose(pf);
     return OK;
 }
 
-int ListadoXPlan(const char *nombreArch, t_indice *ind)
+int ListadoXPlan(t_miembro *vec, t_indice *ind)
 {
-    int i, n;
-    char planes[4][10]= {"BASIC","PREMIUM","VIP","FAMILY"};
-    t_miembro aux;
-    FILE *pf;
-    t_reg_indice *vecInd;
-
-
-    pf = fopen(nombreArch, "rb");
-    if (!pf)
-    {
-        printf("\nError al abrir archivo binario");
-        return ERROR;
-    }
+    int i;
+    static const char *planes[] = {"BASIC", "PREMIUM", "VIP", "FAMILY"};
 
     if (ind->cantidad_elementos_actual == 0)
-    {
-        printf("\nNo hay registros en el índice.\n");
-        fclose(pf);
         return ERROR;
-    }
 
-    vecInd = (t_reg_indice *)ind->vindice;
-
-    for(i=0; i<4; i++)
+    for(i = 0; i < 4; i++)
     {
-        printf("\n\n=====================================\n");
-        printf("             PLAN %s \n",(planes[i]));
-        printf("=====================================\n");
-        for(n=0; n<ind->cantidad_elementos_actual; n++)
+        int n;
+
+        printf("\n\n============= PLAN %s =============\n", planes[i]);
+        for(n = 0; n < (int)ind->cantidad_elementos_actual; n++)
         {
-            fseek(pf,sizeof(t_miembro)*((vecInd+n)->nro_reg),0);
-            fread(&aux,sizeof(t_miembro),1,pf);
-            if(strcmpi(*(planes+i),aux.plan)==0 && toupper(aux.estado)=='A')
+            t_miembro *m = &vec[((t_reg_indice *)ind->vindice)[n].nro_reg];
+            if (toupper((unsigned char)m->estado) == 'A' && strcmpi(planes[i], m->plan) == 0)
             {
-                printf("DNI: %ld\n", aux.dni);
-                printf("Nombre y Apellido: %s\n", aux.nya);
-                printf("Fecha de Nacimiento: %02d/%02d/%04d\n", aux.fecha_nac.dia, aux.fecha_nac.mes, aux.fecha_nac.anio);
-                printf("Sexo: %c\n", aux.sexo);
-                printf("Fecha de Afiliacion: %02d/%02d/%04d\n", aux.fecha_afi.dia, aux.fecha_afi.mes, aux.fecha_afi.anio);
-                printf("Categoria: %s\n", aux.cat);
-                printf("Fecha de ultima Cuota: %02d/%02d/%04d\n", aux.fecha_cuota.dia, aux.fecha_cuota.mes, aux.fecha_cuota.anio);
-                printf("Estado: %c\n", aux.estado);
-                printf("Plan: %s\n", aux.plan);
-                printf("Email: %s\n", aux.email);
+                imprimir_miembro(m);
                 printf("-------------------------------------\n");
             }
         }
     }
 
-    fclose(pf);
     return OK;
-}
-
-void mostrarMiembros(const char *nombreArch)
-{
-    FILE *pf;
-    t_miembro miembro;
-
-    pf = fopen(nombreArch, "rb");
-    if (!pf)
-    {
-        printf("No se pudo abrir el archivo binario: %s\n", nombreArch);
-        return;
-    }
-
-    printf("\n--- Miembros en el archivo.dat ---\n");
-    while (fread(&miembro, sizeof(t_miembro), 1, pf) == 1)
-    {
-        printf("  DNI: %ld  ", miembro.dni);
-        printf("  Nombre y Apellido: %s", miembro.nya);
-        printf("  Fecha de Nacimiento: %02d/%02d/%04d", miembro.fecha_nac.dia, miembro.fecha_nac.mes, miembro.fecha_nac.anio);
-        printf("  Sexo: %c", miembro.sexo);
-        printf("  Fecha de Afiliacion: %02d/%02d/%04d", miembro.fecha_afi.dia, miembro.fecha_afi.mes, miembro.fecha_afi.anio);
-        printf("  Categoria: %s\n", miembro.cat);
-        printf("  Fecha de ultima Cuota: %02d/%02d/%04d\n", miembro.fecha_cuota.dia, miembro.fecha_cuota.mes, miembro.fecha_cuota.anio);
-        printf("  Estado: %c", miembro.estado);
-        printf("  Plan: %s", miembro.plan);
-        printf("  Email: %s\n", miembro.email);
-        printf("-------------------------------\n");
-    }
-    fclose(pf);
 }

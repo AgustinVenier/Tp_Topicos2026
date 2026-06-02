@@ -1,8 +1,11 @@
 #include "indice.h"
-#include "functions.h"
+#include "validaciones.h"
 
 void indice_crear(t_indice *indice, size_t nmemb, size_t tamanyo)
 {
+    if (nmemb == 0)
+        nmemb = CANT_ELEMENTOS;
+
     indice->vindice = malloc(nmemb * tamanyo);
     if(!indice->vindice)
     {
@@ -15,27 +18,38 @@ void indice_crear(t_indice *indice, size_t nmemb, size_t tamanyo)
 
 void indice_redimensionar(t_indice *indice, size_t nmemb, size_t tamanyo)
 {
-    indice->vindice = realloc(indice->vindice, (nmemb * tamanyo) *INCREMENTO );
+    size_t nueva_capacidad = (size_t)((double)nmemb * INCREMENTO);
+
+    if (nueva_capacidad <= nmemb)
+        nueva_capacidad = nmemb + 1;
+
+    indice->vindice = realloc(indice->vindice, nueva_capacidad * tamanyo);
     if(!indice->vindice)
     {
         printf("No se ha podido asignar memoria\n");
         exit(ERROR);
     }
-    indice->cantidad_elementos_maxima = (int)(nmemb * INCREMENTO);
+    indice->cantidad_elementos_maxima = (unsigned)nueva_capacidad;
 }
 int indice_insertar (t_indice *indice, const void *registro, size_t tamanyo,
                      int (*cmp)(const void *, const void *))
 {
-    char *base = (char*)indice->vindice;
-    // Buscar si ya existe
+    char *base;
+
+    if (!indice || !registro)
+        return ERROR;
+
+    base = (char*)indice->vindice;
+
     if(indice_buscar(indice,registro,indice->cantidad_elementos_actual,tamanyo,cmp)!=NO_EXISTE)
     {
         return ERROR;
     }
-    // Verificar capacidad
+
     if (indice_lleno(indice) == OK)
     {
         indice_redimensionar(indice,indice->cantidad_elementos_maxima,tamanyo);
+        base = (char*)indice->vindice;
     }
 
     memcpy(base + indice->cantidad_elementos_actual * tamanyo, registro, tamanyo);
@@ -57,7 +71,6 @@ int indice_eliminar(t_indice *indice, const void *registro, size_t tamanyo, int 
 
     size_t ult = indice->cantidad_elementos_actual - 1;
 
-    // Si no estamos eliminando el último, desplazamos la “cola” una posición a la izquierda
     if ((size_t)pos < ult)
     {
         char *base = (char *)indice->vindice;
@@ -71,6 +84,9 @@ int indice_eliminar(t_indice *indice, const void *registro, size_t tamanyo, int 
 int indice_buscar (const t_indice *indice, const void *registro, size_t nmemb,
                    size_t tamanyo, int (*cmp)(const void *, const void *))
 {
+    if (!indice || !indice->vindice || nmemb == 0)
+        return NO_EXISTE;
+
     return busquedaBinaria(indice->vindice,registro,nmemb,tamanyo,cmp);
 }
 
@@ -92,15 +108,16 @@ void indice_vaciar(t_indice *indice)
     if (!indice || !indice->vindice)
         return ;
     free(indice->vindice);
+    indice->vindice = NULL;
     indice->cantidad_elementos_actual = 0;
     indice->cantidad_elementos_maxima = 0;
 }
 
 
-int indice_cargar(const char* path, t_indice* indice, void *vreg_ind, size_t
-                  tamanyo, int (*cmp)(const void *, const void *))
+int indice_cargar(const char* path, t_indice* indice, size_t tamanyo,
+                  int (*cmp)(const void *, const void *))
 {
-    int pos = 0;
+    unsigned pos = 0;
     t_miembro m;
     t_reg_indice reg;
 
@@ -110,11 +127,14 @@ int indice_cargar(const char* path, t_indice* indice, void *vreg_ind, size_t
         return ERROR;
     }
 
+    if (!indice->vindice)
+        indice_crear(indice, CANT_ELEMENTOS, tamanyo);
+
     while(fread(&m, sizeof(t_miembro), 1, arch))
     {
         reg.dni = m.dni;
         reg.nro_reg = pos;
-        if(toupper(m.estado)!='B') // valida no insertar al indice los dados de baja
+        if(toupper((unsigned char)m.estado)!='B')
         {
             indice_insertar(indice,&reg,tamanyo,cmp);
         }
@@ -129,17 +149,34 @@ int cmp_por_dni(const void *a, const void *b)
     const t_reg_indice *r1 = (const t_reg_indice *)a;
     const t_reg_indice *r2 = (const t_reg_indice *)b;
 
-    return (r1->dni - r2->dni);
+    if (r1->dni < r2->dni)
+        return -1;
+    if (r1->dni > r2->dni)
+        return 1;
+    return 0;
+}
+
+int cmp_por_id(const void *a, const void *b)
+{
+    const t_reg_indice_titulo *r1 = (const t_reg_indice_titulo *)a;
+    const t_reg_indice_titulo *r2 = (const t_reg_indice_titulo *)b;
+
+    if (r1->id < r2->id)
+        return -1;
+    if (r1->id > r2->id)
+        return 1;
+    return 0;
 }
 
 int busquedaBinaria(const void *vec, const void *buscado, unsigned cantelem, size_t tamanyo, int(*cmp)(const void *, const void*))
 {
-    int i = 0, f = cantelem - 1, medio, res;
+    int i = 0, f = (int)cantelem - 1, medio, res;
+    const char *base = (const char *)vec;
 
     while(i <= f)
     {
         medio = (i + f)/2;
-        res = cmp(buscado, vec + (medio * tamanyo));
+        res = cmp(buscado, base + (medio * tamanyo));
 
         if(!res)
         {

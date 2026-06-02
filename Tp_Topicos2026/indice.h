@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "estructuras.h"
 
 
 #define CANT_ELEMENTOS 100
@@ -17,6 +18,12 @@ typedef struct
     unsigned nro_reg;
     long dni;
 } t_reg_indice;
+
+typedef struct
+{
+    unsigned nro_reg;
+    int id;
+} t_reg_indice_titulo;
 
 typedef struct
 {
@@ -46,11 +53,13 @@ int indice_lleno(const t_indice *indice);
 
 void indice_vaciar(t_indice* indice);
 
-int indice_cargar(const char* path, t_indice* indice, void *vreg_ind, size_t
-                  tamanyo, int (*cmp)(const void *, const void *));
+int indice_cargar(const char* path, t_indice* indice, size_t tamanyo,
+                  int (*cmp)(const void *, const void *));
 
 //Otra funciones para el indice
 int cmp_por_dni(const void *a, const void *b);
+
+int cmp_por_id(const void *a, const void *b);
 
 int busquedaBinaria(const void *vec,const void *buscado, unsigned cantelem, size_t tamanyo, int(*cmp)(const void *, const void*));
 
