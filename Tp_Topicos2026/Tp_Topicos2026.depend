@@ -1,24 +1,22 @@
 # depslib dependency file v1.0
-1779126340 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\main.c
+1780615941 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\main.c
 	<stdio.h>
 	<stdlib.h>
-	<string.h>
+	"archivos.h"
+	"indice.h"
+	"menu.h"
 	"validaciones.h"
-	"estructuras.h"
 
 1780434714 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\validaciones.h
 	"estructuras.h"
 	<ctype.h>
 	<string.h>
 
-1780435253 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\estructuras.h
+1780453117 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\estructuras.h
 
-1779127836 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\validaciones.c
-	"estructuras.h"
+1780434714 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\validaciones.c
 	"validaciones.h"
 	<stdio.h>
-	<ctype.h>
-	<string.h>
 
 1780411419 source:c:\users\agustin\desktop\tp_topicos2026\tp_topicos2026\archivos.c
 	"archivos.h"
@@ -83,4 +81,29 @@
 	<stdlib.h>
 	<string.h>
 	"estructuras.h"
+
+1780453117 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\archivos.h
+	"indice.h"
+
+1780614845 c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\menu.h
+	<stddef.h>
+	"archivos.h"
+
+1780614841 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\archivos.c
+	"archivos.h"
+	"validaciones.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<direct.h>
+	<sys/stat.h>
+
+1780615941 source:c:\users\agust\desktop\tp_topicos2026\tp_topicos2026\menu.c
+	"menu.h"
+	"validaciones.h"
+	<ctype.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
 

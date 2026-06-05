@@ -36,4 +36,20 @@ typedef struct {
     char estado;
 } t_alquiler;
 
+// Estructura para registrar errores de miembros
+typedef struct {
+    char tipo_error[51];      // Tipo de validacion fallida (DNI, Fecha, Email, etc)
+    long dni;                  // DNI asociado al error
+    t_fecha fecha;             // Fecha de proceso
+    char email[31];            // Email del registro con error
+} t_error_miembro;
+
+// Estructura para registrar errores de titulos
+typedef struct {
+    char tipo_error[51];      // Tipo de validacion fallida
+    int id_titulo;            // ID del titulo
+    t_fecha fecha;             // Fecha de proceso
+    char titulo[61];           // Titulo del registro con error
+} t_error_titulo;
+
 #endif // ESTRUCTURAS_H_INCLUDED

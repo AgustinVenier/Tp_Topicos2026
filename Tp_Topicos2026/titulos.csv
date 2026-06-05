@@ -1,53 +1,43 @@
-1;El Padrino;DRAMA;5;A
-2;Volver al Futuro;CIENCIA FICCION;3;A
-3;Titanic;DRAMA;4;A
-4;Matrix;CIENCIA FICCION;6;A
-5;El Rey Leon;COMEDIA;8;A
-6;Terminator 2;ACCION;5;A
-7;El Exorcista;TERROR;2;A
-8;Forrest Gump;DRAMA;7;A
-9;Jurassic Park;CIENCIA FICCION;4;A
-10;Gladiador;ACCION;3;A
-11;The Conjuring;TERROR;5;A
-12;Planeta Tierra;DOCUMENTAL;2;A
-13;La La Land;COMEDIA;4;A
-14;John Wick;ACCION;6;A
-15;It;TERROR;3;A
-0;ERROR ID CERO;DRAMA;5;A
--5;ERROR ID NEGATIVO;ACCION;3;A
-16;ERROR GENERO INVALIDO;ROMANCE;4;A
-17;ERROR GENERO VACIO;;5;A
-18;ERROR GENERO TYPO;DROMA;3;A
-19;ERROR STOCK EXCESIVO;DRAMA;99999;A
-20;Pelicula con estado invalido;COMEDIA;5;X
-21;Otra pelicula estado malo;TERROR;3;Z
-1;DUPLICADO El Padrino;DRAMA;10;A
-2;DUPLICADO Volver al Futuro;ACCION;8;A
-22;Interstellar;CIENCIA FICCION;5;A
-23;The Dark Knight;ACCION;7;A
-24;Inception;CIENCIA FICCION;4;A
-25;Pulp Fiction;DRAMA;3;A
-26;The Shining;TERROR;2;A
-27;Avatar;CIENCIA FICCION;8;A
-28;Los Vengadores;ACCION;10;A
-29;Coco;COMEDIA;6;A
-30;Cosmos;DOCUMENTAL;3;A
-31;Fight Club;DRAMA;4;A
-32;Alien;TERROR;3;A
-33;Indiana Jones;ACCION;5;A
-34;E.T.;CIENCIA FICCION;4;A
-35;Frozen;COMEDIA;9;A
-;Titulo sin ID;DRAMA;5;A
-36;;ACCION;3;A
-37;Pelicula sin genero;;4;A
-38;Pelicula sin stock;TERROR;;A
-39;Pelicula sin estado;DRAMA;5;
-ABC;ID con letras;COMEDIA;3;A
-12#$;ID caracteres especiales;DRAMA;5;A
--1;ID negativo;ACCION;4;A
-40;Película con ñ y acentos áéíóú;DRAMA;5;A
-41;Movie	con	tabs;ACCION;3;A
-42;Pelicula\ncon\nsaltos;TERROR;2;A
+El Padrino|DRAMA|5|A
+Volver al Futuro|ACCION|3|A
+Titanic|DRAMA|4|A
+Matrix|ACCION|6|A
+El Rey Leon|COMEDIA|8|A
+Terminator 2|ACCION|5|A
+El Exorcista|TERROR|2|A
+Forrest Gump|DRAMA|7|A
+Jurassic Park|ACCION|4|A
+Gladiador|ACCION|3|A
+Inception|SUSPENSO|5|A
+The Dark Knight|ACCION|6|A
+Interstellar|CIENCIA FICCION|4|A
+Avatar|ACCION|8|A
+Pulp Fiction|DRAMA|2|A
+Shrek|COMEDIA|9|A
+Toy Story|COMEDIA|10|A
+Coco|COMEDIA|5|A
+La La Land|DRAMA|3|A
+Mad Max Fury Road|ACCION|4|A
+Parasite|DRAMA|2|B
+Oppenheimer|DRAMA|6|A
+Barbie|COMEDIA|8|A
+Dune|CIENCIA FICCION|3|A
+Top Gun Maverick|ACCION|5|A
+Avatar 2|GENERO_INVALIDO|7|A
+Jaws|TERROR|4|A
+Superman|ACCION|-5|A
+Spider Man|ACCION|12|A
+The Avengers|ACCION|8|A
+Iron Man|ACCION|6|A
+Captain America|ACCION|4|X
+Thor|ACCION|5|A
+Hulk|ACCION|3|A
+Black Widow|ACCION|2|A
+Guardians of the Galaxy|COMEDIA|6|A
+Doctor Strange|CIENCIA FICCION|4|A
+Ant Man|COMEDIA|3|A
+Captain Marvel|ACCION|7|A
+Eternals|ACCION|2|A
 43;Titulo@#$%&*();COMEDIA;4;A
 44;Genero con espacios;CIENCIA  FICCION;5;A
 45;Genero numerico;12345;3;A

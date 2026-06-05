@@ -1,5 +1,6 @@
 #include "validaciones.h"
 #include <stdio.h>
+#include <time.h>
 
 void obtenerCuil(const char *dni, char sexo, char *cuil)
 {
@@ -67,15 +68,38 @@ void obtenerCuil(const char *dni, char sexo, char *cuil)
 void ingresarFechaProceso(t_fecha *fecha_proceso)
 {
     int estado;
+    char entrada[50];
+    int dia = 0, mes = 0, anio = 0;
+    int resultado;
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
 
-    printf("Ingrese fecha del proceso (DD/MM/AAAA): ");
+    printf("Ingrese fecha del proceso (DD/MM/AAAA) o solo Enter para hoy: ");
 
     do
     {
-        scanf("%d/%d/%d", &fecha_proceso->dia, &fecha_proceso->mes, &fecha_proceso->anio);
-        estado = validarFecha(fecha_proceso);
-        if(estado == ERROR)
-            printf("Error. Ingrese nuevamente: ");
+        fgets(entrada, sizeof(entrada), stdin);
+        
+        // Si presiona solo enter, usa la fecha de hoy
+        if (entrada[0] == '\n') {
+            fecha_proceso->dia = tm_info->tm_mday;
+            fecha_proceso->mes = tm_info->tm_mon + 1;
+            fecha_proceso->anio = tm_info->tm_year + 1900;
+            estado = OK;
+        }
+        else {
+            resultado = sscanf(entrada, "%d/%d/%d", &dia, &mes, &anio);
+            if (resultado != 3) {
+                printf("Error. Ingrese nuevamente (DD/MM/AAAA) o solo Enter para hoy: ");
+                continue;
+            }
+            fecha_proceso->dia = dia;
+            fecha_proceso->mes = mes;
+            fecha_proceso->anio = anio;
+            estado = validarFecha(fecha_proceso);
+            if(estado == ERROR)
+                printf("Error. Ingrese nuevamente (DD/MM/AAAA) o solo Enter para hoy: ");
+        }
     } while(estado == ERROR);
 }
 

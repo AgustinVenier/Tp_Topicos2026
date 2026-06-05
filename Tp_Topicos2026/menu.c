@@ -56,6 +56,48 @@ static int asegurar_capacidad_titulos(t_titulos **vec, size_t *capacidad, size_t
     return OK;
 }
 
+static int asegurar_capacidad_errores_miembros(t_error_miembro **vec, size_t *capacidad, size_t necesaria)
+{
+    size_t nueva_capacidad;
+    t_error_miembro *aux;
+
+    if (necesaria <= *capacidad)
+        return OK;
+
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_error_miembro));
+    if (!aux)
+        return ERROR;
+
+    *vec = aux;
+    *capacidad = nueva_capacidad;
+    return OK;
+}
+
+static int asegurar_capacidad_errores_titulos(t_error_titulo **vec, size_t *capacidad, size_t necesaria)
+{
+    size_t nueva_capacidad;
+    t_error_titulo *aux;
+
+    if (necesaria <= *capacidad)
+        return OK;
+
+    nueva_capacidad = (*capacidad == 0) ? CANT_ELEMENTOS : *capacidad;
+    while (nueva_capacidad < necesaria)
+        nueva_capacidad = (size_t)((double)nueva_capacidad * INCREMENTO) + 1;
+
+    aux = realloc(*vec, nueva_capacidad * sizeof(t_error_titulo));
+    if (!aux)
+        return ERROR;
+
+    *vec = aux;
+    *capacidad = nueva_capacidad;
+    return OK;
+}
+
 static void imprimir_miembro(const t_miembro *m)
 {
     printf("DNI: %ld\n", m->dni);
@@ -74,6 +116,8 @@ static void imprimir_miembro(const t_miembro *m)
 void menu(t_miembro **vec_miembros, size_t *cantidad_miembros, size_t *capacidad_miembros, t_indice *ind_miembros,
           t_titulos **vec_titulos, size_t *cantidad_titulos, size_t *capacidad_titulos, t_indice *ind_titulos,
           t_alquiler **vec_alquileres, size_t *cantidad_alquileres, size_t *capacidad_alquileres,
+          t_error_miembro **errores_miembros, size_t *cantidad_errores_miembros, size_t *capacidad_errores_miembros,
+          t_error_titulo **errores_titulos, size_t *cantidad_errores_titulos, size_t *capacidad_errores_titulos,
           const t_fecha *fecha)
 {
     char op;
@@ -93,19 +137,23 @@ void menu(t_miembro **vec_miembros, size_t *cantidad_miembros, size_t *capacidad
                  "h. Alquiler de un titulo\n"
                  "i. Listado de miembros ordenados por DNI\n"
                  "j. Listado de todos los miembros agrupados por plan\n"
-                 "k. Salir\n",
-                 "abcdefghijk"
+                 "k. Auditoria errores miembros\n"
+                 "l. Auditoria errores titulos\n"
+                 "m. Salir\n",
+                 "abcdefghijklm"
              );
 
         switch(op)
         {
         case 'a':
-            resultado = AltaMiembro(vec_miembros, cantidad_miembros, capacidad_miembros, ind_miembros, fecha);
+            resultado = AltaMiembro(vec_miembros, cantidad_miembros, capacidad_miembros, ind_miembros, fecha,
+                                   errores_miembros, cantidad_errores_miembros, capacidad_errores_miembros);
             printf(resultado == ERROR ? "\nError al dar de alta el miembro.\n" : "\nAlta realizada con exito.\n");
             break;
 
         case 'b':
-            resultado = AltaTitulo(vec_titulos, cantidad_titulos, capacidad_titulos, ind_titulos);
+            resultado = AltaTitulo(vec_titulos, cantidad_titulos, capacidad_titulos, ind_titulos,
+                                  errores_titulos, cantidad_errores_titulos, capacidad_errores_titulos, fecha);
             printf(resultado == ERROR ? "\nError al dar de alta el titulo.\n" : "\nAlta realizada con exito.\n");
             break;
 
@@ -120,12 +168,14 @@ void menu(t_miembro **vec_miembros, size_t *cantidad_miembros, size_t *capacidad
             break;
 
         case 'e':
-            resultado = ModificacionMiembro(*vec_miembros, ind_miembros, fecha);
+            resultado = ModificacionMiembro(*vec_miembros, ind_miembros, fecha,
+                                           errores_miembros, cantidad_errores_miembros, capacidad_errores_miembros);
             printf(resultado == ERROR ? "\nError al modificar el miembro.\n" : "\nModificacion realizada con exito.\n");
             break;
 
         case 'f':
-            resultado = ModificacionTitulo(*vec_titulos, ind_titulos);
+            resultado = ModificacionTitulo(*vec_titulos, ind_titulos,
+                                          errores_titulos, cantidad_errores_titulos, capacidad_errores_titulos, fecha);
             printf(resultado == ERROR ? "\nError al modificar el titulo.\n" : "\nModificacion realizada con exito.\n");
             break;
 
@@ -155,6 +205,16 @@ void menu(t_miembro **vec_miembros, size_t *cantidad_miembros, size_t *capacidad
             break;
 
         case 'k':
+            mostrar_auditoria_miembros(*errores_miembros, *cantidad_errores_miembros);
+            system("pause");
+            break;
+
+        case 'l':
+            mostrar_auditoria_titulos(*errores_titulos, *cantidad_errores_titulos);
+            system("pause");
+            break;
+
+        case 'm':
             printf("Saliendo...\n");
             break;
 
@@ -163,7 +223,7 @@ void menu(t_miembro **vec_miembros, size_t *cantidad_miembros, size_t *capacidad
             break;
         }
     }
-    while(op != 'k');
+    while(op != 'm');
 }
 
 void eliminarFinDeLinea(char *cad)
@@ -206,14 +266,17 @@ void preguntarCambio(const char *cad, char* aux)
     limpiarBuffer();
 }
 
-int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *ind, const t_fecha *fecha)
+int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *ind, const t_fecha *fecha,
+                t_error_miembro **errores, size_t *cantidad_errores, size_t *capacidad_errores)
 {
     t_miembro m;
+    t_error_miembro error;
     t_reg_indice reg;
     long dni;
     int validar;
 
     memset(&m, 0, sizeof(m));
+    memset(&error, 0, sizeof(error));
 
     printf("\nIngrese DNI: ");
     if (scanf("%ld", &dni) != 1)
@@ -224,7 +287,19 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
     limpiarBuffer();
 
     if (!dniValido(dni))
+    {
+        strcpy(error.tipo_error, "DNI");
+        error.dni = dni;
+        error.fecha = *fecha;
+        strcpy(error.email, "");
+        
+        if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+        {
+            (*errores)[*cantidad_errores] = error;
+            (*cantidad_errores)++;
+        }
         return ERROR;
+    }
 
     reg.dni = dni;
     if (indice_buscar(ind, &reg, ind->cantidad_elementos_actual, sizeof(t_reg_indice), cmp_por_dni) != NO_EXISTE)
@@ -249,7 +324,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         limpiarBuffer();
         validar = sexValido(m.sexo) ? OK : ERROR;
         if (validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Sexo");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, "");
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while (validar == ERROR);
 
@@ -267,7 +353,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         limpiarBuffer();
         validar = fNacValido(&m.fecha_nac, fecha);
         if(validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Fecha Nacimiento");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, "");
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while(validar == ERROR);
 
@@ -279,7 +376,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         limpiarBuffer();
         validar = fAfiliacionValido(&m.fecha_afi, fecha, &m.fecha_nac);
         if(validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Fecha Afiliacion");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, "");
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while(validar == ERROR);
 
@@ -291,7 +399,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         eliminarFinDeLinea(m.cat);
         validar = validarFechaCategoria(m.cat, &m.fecha_nac, fecha);
         if(validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Categoria");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, "");
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while(validar == ERROR);
 
@@ -303,7 +422,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         limpiarBuffer();
         validar = fUltCoutaValido(&m.fecha_cuota, &m.fecha_afi, fecha);
         if(validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Fecha Cuota");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, "");
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while(validar == ERROR);
 
@@ -315,7 +445,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         eliminarFinDeLinea(m.plan);
         validar = planValido(m.plan) ? OK : ERROR;
         if(validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Plan");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, "");
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while(validar == ERROR);
 
@@ -327,7 +468,18 @@ int AltaMiembro(t_miembro **vec, size_t *cantidad, size_t *capacidad, t_indice *
         eliminarFinDeLinea(m.email);
         validar = validarEmail(m.email);
         if(validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Email");
+            error.dni = dni;
+            error.fecha = *fecha;
+            strcpy(error.email, m.email);
+            if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while(validar == ERROR);
 
@@ -365,7 +517,8 @@ int BajaMiembro(t_miembro *vec, t_indice *ind)
     return indice_eliminar(ind, &clave, sizeof(t_reg_indice), cmp_por_dni);
 }
 
-int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
+int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha,
+                        t_error_miembro **errores, size_t *cantidad_errores, size_t *capacidad_errores)
 {
     long dni;
     t_reg_indice clave;
@@ -373,6 +526,7 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
     char aux;
     t_miembro *m;
     int validar;
+    t_error_miembro error;
 
     printf("\n=== MODIFICACION DE MIEMBRO ===\n");
     printf("Ingrese DNI a modificar: ");
@@ -407,6 +561,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             limpiarBuffer();
             validar = fNacValido(&m->fecha_nac, fecha);
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Fecha Nacimiento");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -421,6 +589,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             limpiarBuffer();
             validar = sexValido(m->sexo) ? OK : ERROR;
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Sexo");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -435,6 +617,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             limpiarBuffer();
             validar = fAfiliacionValido(&m->fecha_afi, fecha, &m->fecha_nac);
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Fecha Afiliacion");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -449,6 +645,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             eliminarFinDeLinea(m->cat);
             validar = validarFechaCategoria(m->cat, &m->fecha_nac, fecha);
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Categoria");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -463,6 +673,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             limpiarBuffer();
             validar = fUltCoutaValido(&m->fecha_cuota, &m->fecha_afi, fecha);
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Fecha Cuota");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -477,6 +701,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             eliminarFinDeLinea(m->plan);
             validar = planValido(m->plan) ? OK : ERROR;
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Plan");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -491,6 +729,20 @@ int ModificacionMiembro(t_miembro *vec, t_indice *ind, const t_fecha *fecha)
                 return ERROR;
             eliminarFinDeLinea(m->email);
             validar = validarEmail(m->email);
+            if(validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Email");
+                error.dni = m->dni;
+                error.fecha = *fecha;
+                strcpy(error.email, m->email);
+                
+                if (asegurar_capacidad_errores_miembros(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
+            }
         }
         while(validar == ERROR);
     }
@@ -575,15 +827,18 @@ static void imprimir_titulo(const t_titulos *t)
     printf("Estado: %c\n", t->estado);
 }
 
-int AltaTitulo(t_titulos **vec, size_t *cantidad, size_t *capacidad, t_indice *ind)
+int AltaTitulo(t_titulos **vec, size_t *cantidad, size_t *capacidad, t_indice *ind,
+               t_error_titulo **errores, size_t *cantidad_errores, size_t *capacidad_errores, const t_fecha *fecha)
 {
     t_titulos t;
+    t_error_titulo error;
     t_reg_indice_titulo reg;
     int validar;
     int max_id = 0;
     unsigned i;
 
     memset(&t, 0, sizeof(t));
+    memset(&error, 0, sizeof(error));
 
     if (ind->cantidad_elementos_actual > 0)
     {
@@ -613,7 +868,18 @@ int AltaTitulo(t_titulos **vec, size_t *cantidad, size_t *capacidad, t_indice *i
         normalizarGenero(t.genero);
         validar = generoValido(t.genero) ? OK : ERROR;
         if (validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Genero");
+            error.id_titulo = t.id;
+            error.fecha = *fecha;
+            strncpy(error.titulo, t.titulo, 60);
+            if (asegurar_capacidad_errores_titulos(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while (validar == ERROR);
 
@@ -625,7 +891,18 @@ int AltaTitulo(t_titulos **vec, size_t *cantidad, size_t *capacidad, t_indice *i
         limpiarBuffer();
         validar = stockValido(t.stock) ? OK : ERROR;
         if (validar == ERROR)
+        {
+            strcpy(error.tipo_error, "Stock");
+            error.id_titulo = t.id;
+            error.fecha = *fecha;
+            strncpy(error.titulo, t.titulo, 60);
+            if (asegurar_capacidad_errores_titulos(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+            {
+                (*errores)[*cantidad_errores] = error;
+                (*cantidad_errores)++;
+            }
             printf("Ingreso Incorrecto.\n");
+        }
     }
     while (validar == ERROR);
 
@@ -664,7 +941,8 @@ int BajaTitulo(t_titulos *vec, t_indice *ind)
     return indice_eliminar(ind, &clave, sizeof(t_reg_indice_titulo), cmp_por_id);
 }
 
-int ModificacionTitulo(t_titulos *vec, t_indice *ind)
+int ModificacionTitulo(t_titulos *vec, t_indice *ind,
+                       t_error_titulo **errores, size_t *cantidad_errores, size_t *capacidad_errores, const t_fecha *fecha)
 {
     int id;
     t_reg_indice_titulo clave;
@@ -672,6 +950,7 @@ int ModificacionTitulo(t_titulos *vec, t_indice *ind)
     char aux;
     t_titulos *t;
     int validar;
+    t_error_titulo error;
 
     printf("\n=== MODIFICACION DE TITULO ===\n");
     printf("Ingrese ID a modificar: ");
@@ -707,7 +986,20 @@ int ModificacionTitulo(t_titulos *vec, t_indice *ind)
             normalizarGenero(t->genero);
             validar = generoValido(t->genero) ? OK : ERROR;
             if (validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Genero");
+                error.id_titulo = t->id;
+                error.fecha = *fecha;
+                strncpy(error.titulo, t->titulo, 60);
+                
+                if (asegurar_capacidad_errores_titulos(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
                 printf("Ingreso Incorrecto.\n");
+            }
         }
         while (validar == ERROR);
     }
@@ -723,7 +1015,20 @@ int ModificacionTitulo(t_titulos *vec, t_indice *ind)
             limpiarBuffer();
             validar = stockValido(t->stock) ? OK : ERROR;
             if (validar == ERROR)
+            {
+                memset(&error, 0, sizeof(error));
+                strcpy(error.tipo_error, "Stock");
+                error.id_titulo = t->id;
+                error.fecha = *fecha;
+                strncpy(error.titulo, t->titulo, 60);
+                
+                if (asegurar_capacidad_errores_titulos(errores, capacidad_errores, *cantidad_errores + 1) == OK)
+                {
+                    (*errores)[*cantidad_errores] = error;
+                    (*cantidad_errores)++;
+                }
                 printf("Ingreso Incorrecto.\n");
+            }
         }
         while (validar == ERROR);
     }
@@ -751,6 +1056,8 @@ int MostrarInfoTitulo(t_titulos *vec, t_indice *ind)
     imprimir_titulo(&vec[((t_reg_indice_titulo *)ind->vindice)[pos].nro_reg]);
     return OK;
 }
+
+
 
 static int asegurar_capacidad_alquileres(t_alquiler **vec, size_t *capacidad, size_t necesaria)
 {

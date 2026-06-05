@@ -1,38 +1,36 @@
-20-12345678-6;Garcia, Juan Pablo;15/03/1990;M;juan.garcia@gmail.com;PREMIUM;A
-27-23456789-4;Lopez, Maria Laura;22/07/1985;F;maria.lopez@hotmail.com;VIP;A
-20-34567890-2;Martinez, Carlos Alberto;10/11/1978;M;carlos.martinez@yahoo.com.ar;BASIC;A
-27-45678901-0;Rodriguez, Ana Belen;05/09/1995;F;ana.rodriguez@empresa.com;FAMILY;A
-20-56789012-8;Fernandez, Diego Martin;18/02/1982;M;;PREMIUM;A
-27-67890123-6;Gonzalez, Patricia Soledad;30/12/1988;F;patricia.gonzalez@outlook.com;BASIC;A
-20-78901234-4;Sanchez, Roberto Luis;25/06/1975;M;roberto.sanchez@gmail.com;VIP;A
-27-89012345-2;Perez, Claudia Ines;14/04/1992;F;claudia.perez@hotmail.com;FAMILY;A
-20-11223344-5;Diaz, Marcelo Fabian;08/08/1980;M;marcelo.diaz@empresa.com.ar;PREMIUM;A
-27-22334455-3;Torres, Luciana Victoria;19/01/1998;F;luciana.torres@gmail.com;BASIC;A
-12-99887766-1;ERROR CUIL PREFIJO;01/01/1990;M;test@test.com;BASIC;A
-20-123-5;ERROR DNI MUY CORTO;01/01/1990;M;test@test.com;BASIC;A
-20-12345678-9;ERROR DIGITO VERIFICADOR;15/03/1990;M;error@test.com;PREMIUM;A
-27-33445566-8;ERROR CUIL MUJER CON PREFIJO 20;20/05/1985;F;maria@test.com;BASIC;A
-20-44556677-1;Apellido Nombre Sin Coma;12/06/1988;M;test@email.com;PREMIUM;A
-27-55667788-9;Ruiz, Valentina;30/02/2000;F;valentina@test.com;BASIC;A
-20-66778899-7;Molina, Andres;15/05/2020;M;andres@test.com;PREMIUM;A
-27-77889900-5;Romero, Carolina;10/10/1990;F;email_sin_arroba.com;VIP;A
-20-88990011-3;Acosta, Fernando;25/12/1985;M;fernando@;BASIC;A
-27-99001122-1;Herrera, Gabriela;05/07/1992;F;@dominio.com;FAMILY;A
-20-11112222-9;Medina, Pablo;20/08/1980;M;pablo@gmail.com;GOLD;A
-27-22223333-7;Castro, Lorena;15/03/1975;F;lorena@hotmail.com;SILVER;A
-20-33334444-5;Vargas, Nicolas;10/10/1988;M;nicolas@empresa.com;BASICO;A
-27-44445555-3;Rios, Daniela;08/04/1995;F;daniela@yahoo.com;BASIC;X
-20-55556666-1;Aguirre, Sebastian;22/11/1982;M;sebastian@test.com;VIP;Z
-20-12345678-6;DUPLICADO Garcia Juan;15/03/1990;M;duplicado@test.com;BASIC;A
-27-23456789-4;DUPLICADO Lopez Maria;22/07/1985;F;duplicado2@test.com;VIP;A
-20-66667777-9;Sosa, Leandro;01/01/1960;M;leandro.sosa@gmail.com;PREMIUM;A
-27-77778888-7;Vera, Jimena;28/02/2015;F;jimena@test.com;BASIC;A
-20-88889999-5;Paz, Ezequiel Raul;17/09/1993;M;ezequiel.paz@empresa.com.ar;FAMILY;A
-27-99990000-3;Luna, Camila Sol;03/03/1987;F;camila.luna@outlook.com;VIP;A
-20-10101010-1;Flores, Matias;14/07/1991;M;matias.flores@gmail.com;BASIC;A
-27-20202020-9;Cabrera, Rocio;26/10/1996;F;;PREMIUM;A
-20-30303030-7;Ortiz, Agustin;11/12/1984;M;agustin@trabajo.com;VIP;A
-27-40404040-5;Silva, Milagros;09/05/1999;F;milagros.silva@yahoo.com.ar;FAMILY;A
+20123456|Garcia Juan|15/03/1990|M|15/03/2020|ADULTO|15/12/2025|A|PREMIUM|juan.garcia@gmail.com
+23654321|Lopez Maria|22/07/1985|F|22/07/2020|ADULTO|22/12/2025|A|VIP|maria.lopez@hotmail.com
+20345678|Martinez Carlos|10/11/1978|M|10/11/2018|ADULTO|10/12/2025|A|BASIC|carlos.martinez@yahoo.com
+27456789|Rodriguez Ana|05/09/1995|F|05/09/2021|ADULTO|05/12/2025|A|FAMILY|ana.rodriguez@empresa.com
+20567890|Fernandez Diego|18/02/1982|M|18/02/2019|ADULTO|18/12/2025|B|PREMIUM|diego.fernandez@gmail.com
+27678901|Gonzalez Patricia|30/12/1988|F|30/12/2020|ADULTO|30/12/2025|A|BASIC|patricia.gonzalez@outlook.com
+20789012|Sanchez Roberto|25/06/1975|M|25/06/2018|ADULTO|25/12/2025|A|VIP|roberto.sanchez@gmail.com
+27890123|Perez Claudia|14/04/1992|F|14/04/2021|ADULTO|14/12/2025|A|FAMILY|claudia.perez@hotmail.com
+20901234|Diaz Marcelo|08/08/1980|M|08/08/2019|ADULTO|08/12/2025|A|PREMIUM|marcelo.diaz@empresa.com
+27012345|Torres Luciana|19/01/1998|F|19/01/2022|MENOR|19/12/2025|A|BASIC|luciana.torres@gmail.com
+20111111|Ruiz Valentina|15/05/1988|F|15/05/2020|ADULTO|15/12/2025|A|PREMIUM|valentina.ruiz@test.com
+27222222|Molina Andres|12/03/1985|M|12/03/2019|ADULTO|12/12/2025|A|VIP|andres.molina@test.com
+20333333|Romero Carolina|10/10/1990|F|10/10/2021|ADULTO|10/12/2025|A|BASIC|carolina.romero@test.com
+27444444|Acosta Fernando|25/12/1985|M|25/12/2019|ADULTO|25/12/2025|A|FAMILY|fernando.acosta@test.com
+20555555|Herrera Gabriela|05/07/1992|F|05/07/2020|ADULTO|05/12/2025|A|PREMIUM|gabriela.herrera@test.com
+27666666|Medina Pablo|20/08/1980|M|20/08/2018|ADULTO|20/12/2025|A|VIP|pablo.medina@test.com
+20777777|Castro Lorena|15/03/1975|F|15/03/2019|ADULTO|15/12/2025|A|BASIC|lorena.castro@test.com
+27888888|Vargas Nicolas|10/10/1988|M|10/10/2020|ADULTO|10/12/2025|A|FAMILY|nicolas.vargas@test.com
+20999999|Rios Daniela|08/04/1995|F|08/04/2021|ADULTO|08/12/2025|A|PREMIUM|daniela.rios@test.com
+27101010|Aguirre Sebastian|22/11/1982|M|22/11/2019|ADULTO|22/12/2025|X|VIP|sebastian.aguirre@test.com
+20121212|Sosa Leandro|01/01/1960|M|01/01/2015|ADULTO|01/12/2025|A|BASIC|leandro.sosa@test.com
+27131313|Vera Jimena|28/02/2015|F|28/02/2025|MENOR|28/12/2025|A|FAMILY|jimena.vera@test.com
+20141414|Paz Ezequiel|17/09/1993|M|17/09/2020|ADULTO|17/12/2025|A|PREMIUM|ezequiel.paz@test.com
+27151515|Luna Camila|03/03/1987|F|03/03/2019|ADULTO|03/12/2025|A|VIP|camila.luna@test.com
+20161616|Flores Matias|14/07/1991|M|14/07/2020|ADULTO|14/12/2025|A|BASIC|matias.flores@test.com
+27171717|Cabrera Rocio|26/10/1996|F|26/10/2021|ADULTO|26/12/2025|A|FAMILY|rocio.cabrera@test.com
+20181818|ERROR SEXO INVALIDO|11/12/1984|X|11/12/2019|ADULTO|11/12/2025|A|PREMIUM|agustin.ortiz@test.com
+27191919|ERROR FECHA INVALIDA|32/13/1999|F|32/13/2024|ADULTO|32/13/2025|A|VIP|milagros.silva@test.com
+20202020|ERROR PLAN INVALIDO|15/05/1985|M|15/05/2020|ADULTO|15/12/2025|A|INVALID|test@test.com
+27212121|ERROR EMAIL INVALIDO|20/03/1992|F|20/03/2021|ADULTO|20/12/2025|A|BASIC|notanvalidmail|
+20222222|ERROR ESTADO|25/02/1990|M|25/02/2022|ADULTO|25/12/2025|Z|FAMILY|lucas@test.com
+27232323|ERROR CATEGORIA|18/06/2005|F|18/06/2024|INVALIDA|18/12/2025|A|PREMIUM|martina@test.com
+
 20-50505050-3;Moreno, Tomas;31/08/1977;M;tomas.moreno@gmail.com;BASIC;A
 ;Campos, Vacio CUIL;10/05/1990;M;vacio@test.com;BASIC;A
 20-60606060-1;;15/03/1985;F;sinNombre@test.com;PREMIUM;A
